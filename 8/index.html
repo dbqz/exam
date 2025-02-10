@@ -1,0 +1,372 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>定边七中｜八年级查询</title>
+    <script src="https://challenges.cloudflare.com/turnstile/v0/api.js" async defer></script>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@300;400;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary-color: #000000;
+            --secondary-color: #ffffff;
+            --accent-color: #666666;
+            --background-color: #f5f5f5;
+            --text-color: #333333;
+            --card-background: rgba(255, 255, 255, 0.9);
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: 'Noto Sans SC', sans-serif;
+            background-color: var(--background-color);
+            color: var(--text-color);
+            line-height: 1.6;
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 2rem;
+        }
+
+        .container {
+            background-color: var(--card-background);
+            border-radius: 20px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+            overflow: hidden;
+            width: 100%;
+            max-width: 900px;
+            transition: all 0.3s ease;
+        }
+
+        header {
+            background-color: var(--primary-color);
+            color: var(--secondary-color);
+            padding: 2rem;
+            text-align: center;
+        }
+
+        h1 {
+            font-size: 2.5rem;
+            margin-bottom: 0.5rem;
+            font-weight: 700;
+        }
+
+        .subtitle {
+            font-size: 1rem;
+            opacity: 0.8;
+            font-weight: 300;
+        }
+
+        main {
+            padding: 2rem;
+        }
+
+        form {
+            display: grid;
+            gap: 1.5rem;
+        }
+
+        .form-group {
+            display: flex;
+            flex-direction: column;
+        }
+
+        label {
+            font-weight: bold;
+            margin-bottom: 0.5rem;
+            color: var(--primary-color);
+        }
+
+        input, select {
+            padding: 0.75rem;
+            font-size: 1rem;
+            border: 2px solid var(--accent-color);
+            border-radius: 8px;
+            transition: all 0.3s ease;
+        }
+
+        input:focus, select:focus {
+            outline: none;
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 3px rgba(0, 0, 0, 0.1);
+        }
+
+        button {
+            background-color: var(--primary-color);
+            color: var(--secondary-color);
+            border: none;
+            padding: 1rem;
+            font-size: 1.1rem;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            font-weight: bold;
+        }
+
+        button:hover {
+            background-color: var(--accent-color);
+        }
+
+        #results {
+            margin-top: 2rem;
+            opacity: 0;
+            transition: opacity 0.5s ease;
+        }
+
+        #results.show {
+            opacity: 1;
+        }
+
+        .result-container {
+            background-image: url('https://source.unsplash.com/1600x900/?education,blackandwhite');
+            background-size: cover;
+            background-position: center;
+            border-radius: 20px;
+            overflow: hidden;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+        }
+
+        .result-overlay {
+            background-color: rgba(255, 255, 255, 0.9);
+            padding: 2rem;
+            backdrop-filter: blur(5px);
+        }
+
+        .result-section {
+            background-color: rgba(255, 255, 255, 0.8);
+            border-radius: 10px;
+            padding: 1.5rem;
+            margin-bottom: 1.5rem;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+        }
+
+        .result-section h2 {
+            color: var(--primary-color);
+            margin-bottom: 1rem;
+            border-bottom: 2px solid var(--accent-color);
+            padding-bottom: 0.5rem;
+        }
+
+        .score-item {
+            background-color: rgba(245, 245, 245, 0.9);
+            border-radius: 8px;
+            padding: 1rem;
+            margin-bottom: 1rem;
+            transition: all 0.3s ease;
+        }
+
+        .score-item:hover {
+            transform: translateX(5px);
+            box-shadow: -3px 3px 10px rgba(0,0,0,0.1);
+        }
+
+        .answer-sheet {
+            max-width: 100%;
+            height: auto;
+            border-radius: 8px;
+            margin-top: 1rem;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+            transition: all 0.3s ease;
+        }
+
+        .answer-sheet:hover {
+            transform: scale(1.02);
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .loader {
+            border: 5px solid #f3f3f3;
+            border-top: 5px solid var(--primary-color);
+            border-radius: 50%;
+            width: 50px;
+            height: 50px;
+            animation: spin 1s linear infinite;
+            margin: 20px auto;
+            display: none;
+        }
+
+        @media (max-width: 768px) {
+            body {
+                padding: 1rem;
+            }
+
+            .container {
+                border-radius: 10px;
+            }
+
+            header {
+                padding: 1.5rem;
+            }
+
+            h1 {
+                font-size: 2rem;
+            }
+
+            main {
+                padding: 1.5rem;
+            }
+
+            .result-overlay {
+                padding: 1rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>专业成绩查询系统</h1>
+            <p class="subtitle">快速、准确、安全地查询您的考试成绩</p>
+        </header>
+        <main>
+            <form id="queryForm">
+                <div class="form-group">
+                    <label for="name">姓名</label>
+                    <input type="text" id="name" placeholder="请输入您的姓名" required>
+                </div>
+                <div class="form-group">
+                    <label for="subject">科目</label>
+                    <select id="subject">
+                        <option value="SUBJ01de4b004f054e76a1295ef0d83bccbb">英语</option>
+                        <option value="SUBJ25df9928c00b4171b1f617635b033106">数学</option>
+                        <option value="SUBJae5b7cb9071045219af1b71b74c7a2f7">语文</option>
+                        <option value="SUBJ7f007a1596b2440c8d1202af182533ca">物理</option>
+                        <option value="SUBJb6894c3db41c4cf785355dc6cb8e19fe">历史</option>
+                        <option value="SUBJ4cbb9650a3ea41da894cefc41ce88d63">化学</option>
+                        <option value="SUBJ4ab2cb65d5604ea78debe70f13eabf9e">道法</option>
+                    </select>
+                </div>
+                <div class="cf-turnstile" data-sitekey="0x4AAAAAAA1Lgw51wUi0_hHk"></div>
+                <button type="submit">查询成绩</button>
+            </form>
+            <div class="loader"></div>
+            <div id="results"></div>
+        </main>
+    </div>
+
+    <script>
+        document.getElementById('queryForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            const name = document.getElementById('name').value;
+            const subject = document.getElementById('subject').value;
+            const token = turnstile.getResponse();
+
+            if (!token) {
+                alert('请完成人机验证');
+                return;
+            }
+
+            const loader = document.querySelector('.loader');
+            const resultsDiv = document.getElementById('results');
+            loader.style.display = 'block';
+            resultsDiv.innerHTML = '';
+            resultsDiv.classList.remove('show');
+
+            try {
+                // First API call
+                const response1 = await fetch('https://hx-api.tyhuixue.com/exam-service/examinee/queryExaminee?pageNum=1&pageSize=10', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        queryTerms: name,
+                        pageNum: 1,
+                        tempStatus: "",
+                        clazzId: "",
+                        pageSize: 10,
+                        examId: "EXAM95820a888ac6462da6d8fd21f0f64070",
+                        examNumberType: "",
+                        scanSheet: "",
+                        inrecycle: 0,
+                        schoolId: 5394
+                    })
+                });
+                const data1 = await response1.json();
+
+                if (data1.retCode !== "000000" || !data1.result || data1.result.length === 0) {
+                    throw new Error('未找到学生信息');
+                }
+
+                const studentInfo = data1.result[0].examinee;
+
+                // Second API call
+                const response2 = await fetch(`https://hx-api.tyhuixue.com/exam-service/subjectScoreModify/query?examId=EXAM95820a888ac6462da6d8fd21f0f64070&subjectId=${subject}&name=${encodeURIComponent(name)}`);
+                const data2 = await response2.json();
+
+                if (data2.retCode !== "000000" || !data2.result || data2.result.length === 0) {
+                    throw new Error('未找到成绩信息');
+                }
+
+                const scoreInfo = data2.result[0].subjectScore;
+
+                // Display results
+                resultsDiv.innerHTML = `
+                    <div class="result-container">
+                        <div class="result-overlay">
+                            <div class="result-section">
+                                <h2>学生信息</h2>
+                                <p><strong>姓名:</strong> ${studentInfo.name}</p>
+                                <p><strong>学校:</strong> ${studentInfo.schoolName}</p>
+                                <p><strong>班级:</strong> ${studentInfo.clazzName}</p>
+                                <p><strong>考号:</strong> ${studentInfo.examNumber}</p>
+                            </div>
+
+                            <div class="result-section">
+                                <h2>成绩信息</h2>
+                                <p><strong>总分:</strong> ${scoreInfo.totalScore}</p>
+                            </div>
+
+                            <div class="result-section">
+                                <h2>客观题</h2>
+                                ${JSON.parse(scoreInfo.kgScoreJson).items.map(item => `
+                                    <div class="score-item">
+                                        <p><strong>题号:</strong> ${item.title}, <strong>选项:</strong> ${item.item}, <strong>得分:</strong> ${item.score}</p>
+                                    </div>
+                                `).join('')}
+                            </div>
+
+                            <div class="result-section">
+                                <h2>主观题</h2>
+                                ${JSON.parse(scoreInfo.zgScoreJson).items.map(item => `
+                                    <div class="score-item">
+                                        <p><strong>题号:</strong> ${item.title}, <strong>得分:</strong> ${item.score}/${item.items[0].score}</p>
+                                    </div>
+                                `).join('')}
+                            </div>
+
+                            <div class="result-section">
+                                <h2>答题卡</h2>
+                                ${scoreInfo.imgUrlList.map((img, index) => `
+                                    <img src="${img.imgUrl}" alt="答题卡 ${index + 1}" class="answer-sheet">
+                                `).join('')}
+                            </div>
+                        </div>
+                    </div>
+                `;
+                
+                setTimeout(() => {
+                    loader.style.display = 'none';
+                    resultsDiv.classList.add('show');
+                }, 500);
+            } catch (error) {
+                loader.style.display = 'none';
+                resultsDiv.innerHTML = `<p style="color: red; text-align: center; font-weight: bold;">错误: ${error.message}</p>`;
+                resultsDiv.classList.add('show');
+            }
+        });
+    </script>
+</body>
+</html>
