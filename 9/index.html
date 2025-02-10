@@ -263,18 +263,18 @@
             const name = document.getElementById('name').value;
             const subject = document.getElementById('subject').value;
             const token = turnstile.getResponse();
-
+    
             if (!token) {
                 alert('请完成人机验证');
                 return;
             }
-
+    
             const loader = document.querySelector('.loader');
             const resultsDiv = document.getElementById('results');
             loader.style.display = 'block';
             resultsDiv.innerHTML = '';
             resultsDiv.classList.remove('show');
-
+    
             try {
                 // First API call
                 const response1 = await fetch('https://hx-api.tyhuixue.com/exam-service/examinee/queryExaminee?pageNum=1&pageSize=10', {
@@ -296,23 +296,23 @@
                     })
                 });
                 const data1 = await response1.json();
-
+    
                 if (data1.retCode !== "000000" || !data1.result || data1.result.length === 0) {
                     throw new Error('未找到学生信息');
                 }
-
+    
                 const studentInfo = data1.result[0].examinee;
-
+    
                 // Second API call
                 const response2 = await fetch(`https://hx-api.tyhuixue.com/exam-service/subjectScoreModify/query?examId=EXAM95820a888ac6462da6d8fd21f0f64070&subjectId=${subject}&name=${encodeURIComponent(name)}`);
                 const data2 = await response2.json();
-
+    
                 if (data2.retCode !== "000000" || !data2.result || data2.result.length === 0) {
                     throw new Error('未找到成绩信息');
                 }
-
+    
                 const scoreInfo = data2.result[0].subjectScore;
-
+    
                 // Display results
                 resultsDiv.innerHTML = `
                     <div class="result-container">
@@ -324,12 +324,12 @@
                                 <p><strong>班级:</strong> ${studentInfo.clazzName}</p>
                                 <p><strong>考号:</strong> ${studentInfo.examNumber}</p>
                             </div>
-
+    
                             <div class="result-section">
                                 <h2>成绩信息</h2>
                                 <p><strong>总分:</strong> ${scoreInfo.totalScore}</p>
                             </div>
-
+    
                             <div class="result-section">
                                 <h2>客观题</h2>
                                 ${JSON.parse(scoreInfo.kgScoreJson).items.map(item => `
@@ -338,7 +338,7 @@
                                     </div>
                                 `).join('')}
                             </div>
-
+    
                             <div class="result-section">
                                 <h2>主观题</h2>
                                 ${JSON.parse(scoreInfo.zgScoreJson).items.map(item => `
@@ -347,7 +347,7 @@
                                     </div>
                                 `).join('')}
                             </div>
-
+    
                             <div class="result-section">
                                 <h2>答题卡</h2>
                                 ${scoreInfo.imgUrlList.map((img, index) => `
@@ -369,5 +369,6 @@
             }
         });
     </script>
+    
 </body>
 </html>
