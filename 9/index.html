@@ -3,70 +3,431 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>成绩查询系统</title>
+    <title>成绩查询系统 - 焕然一新</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.7.1/jszip.min.js"></script>
+    <script src="https://challenges.cloudflare.com/turnstile/v0/api.js" async defer></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@300;400;500;700&display=swap" rel="stylesheet">
     <style>
+        /*  =========================================================================
+            全局样式重置和基础设置
+            ========================================================================= */
+        html, body {
+            height: 100%;
+        }
+
         body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            font-family: 'Noto Sans SC', sans-serif; /* 使用更现代的中文无衬线字体 */
             margin: 0;
             padding: 0;
-            background-image: url('https://source.unsplash.com/1600x900/?school');
+            background-image: url('https://source.unsplash.com/1600x900/?modern+school+campus'); /* 更具现代感的校园背景 */
             background-size: cover;
             background-attachment: fixed;
             color: #333;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            overflow-y: auto; /* 允许垂直滚动 */
+            -webkit-font-smoothing: antialiased; /* 优化字体渲染 */
+            -moz-osx-font-smoothing: grayscale;
+            transition: background-color 0.5s ease; /* 背景颜色过渡 */
         }
+
+        /*  =========================================================================
+            容器和主布局
+            ========================================================================= */
         .container {
-            background-color: rgba(255, 255, 255, 0.9);
-            padding: 20px;
-            margin: 20px;
-            border-radius: 10px;
-            box-shadow: 0 0 10px rgba(0,0,0,0.1);
+            background-color: rgba(255, 255, 255, 0.92); /* 略微调整透明度 */
+            padding: 45px; /* 增加padding，更显宽敞 */
+            margin: 30px;
+            border-radius: 18px; /* 更大的圆角 */
+            box-shadow: 0 20px 60px rgba(0,0,0,0.25); /* 更立体的阴影 */
+            width: 95%; /* 更宽的容器 */
+            max-width: 1400px; /* 加大最大宽度 */
+            display: flex;
+            flex-direction: column;
+            align-items: stretch;
+            animation: fadeIn 1s ease-out forwards; /* 进入动画 */
+            opacity: 0.95; /* 初始透明度 */
         }
+
+        @keyframes fadeIn {
+            to { opacity: 1; }
+        }
+
         h1 {
-            color: #2c3e50;
+            color: #34495e; /* 更深沉的标题颜色 */
+            text-align: center;
+            margin-bottom: 35px; /* 加大标题下边距 */
+            font-size: 2.8em; /* 增大标题字体 */
+            font-weight: 700; /* 加粗标题 */
+            letter-spacing: 1.2px; /* 调整字间距 */
+            text-shadow: 2px 2px 3px rgba(0,0,0,0.08); /* 标题阴影 */
         }
+
+        /*  =========================================================================
+            表单区域
+            ========================================================================= */
         .form {
-            margin-bottom: 20px;
+            display: flex;
+            justify-content: center;
+            margin-bottom: 40px; /* 加大表单下边距 */
+            gap: 25px; /* 表单元素间距 */
+            align-items: center; /* 垂直居中对齐 */
         }
-        input, select, button {
-            margin: 10px 0;
-            padding: 10px;
-            width: 200px;
+
+        input[type="text"] {
+            padding: 15px 20px; /* 更大的内边距 */
+            width: 350px; /* 加宽输入框 */
+            border: 2px solid #bdc3c7; /* 更粗的边框 */
+            border-radius: 12px; /* 更圆润的输入框 */
+            font-size: 1.1em; /* 增大输入框字体 */
+            color: #555;
+            transition: border-color 0.3s ease, box-shadow 0.3s ease; /* 边框和阴影过渡 */
+            box-shadow: 0 2px 5px rgba(0,0,0,0.05); /* 输入框阴影 */
         }
+
+        input[type="text"]::placeholder {
+            color: #999; /* 占位符颜色 */
+            font-weight: 300; /* 占位符字体 */
+        }
+
+        input[type="text"]:focus {
+            border-color: #3498db; /* 焦点边框颜色 */
+            outline: none; /* 移除默认 focus 效果 */
+            box-shadow: 0 5px 15px rgba(52, 152, 219, 0.2); /* 焦点阴影 */
+        }
+
+
         button {
+            padding: 15px 30px; /* 更大的按钮内边距 */
             background-color: #3498db;
             color: white;
             border: none;
             cursor: pointer;
-            transition: background-color 0.3s;
+            border-radius: 12px; /* 按钮圆角 */
+            font-size: 1.1em; /* 增大按钮字体 */
+            font-weight: 500; /* 按钮字体加粗 */
+            letter-spacing: 1px; /* 按钮字间距 */
+            box-shadow: 0 3px 8px rgba(52, 152, 219, 0.3); /* 按钮阴影 */
+            transition: background-color 0.3s ease, transform 0.2s ease, box-shadow 0.3s ease; /* 多重过渡效果 */
+            outline: none; /* 移除 focus 效果 */
+            position: relative; /* 相对定位，用于波纹效果 */
+            overflow: hidden; /* 裁剪溢出内容，用于波纹效果 */
         }
+
         button:hover {
-            background-color: #2980b9;
+            background-color: #2980b9; /* hover 颜色 */
+            transform: translateY(-2px); /* 悬停时轻微上移 */
+            box-shadow: 0 6px 12px rgba(41, 128, 185, 0.4); /* hover 阴影 */
         }
+
+        button:active {
+            transform: translateY(0); /* 点击时恢复原位 */
+            box-shadow: 0 3px 8px rgba(52, 152, 219, 0.3); /* 点击阴影 */
+        }
+
+
+        /*  =========================================================================
+            人机验证区域
+            ========================================================================= */
+        .cf-turnstile {
+            margin: 30px auto; /* 加大人机验证码上下边距 */
+            border-radius: 10px; /* 人机验证码圆角 */
+            overflow: hidden; /* 裁剪圆角溢出 */
+            box-shadow: 0 4px 10px rgba(0,0,0,0.1); /* 阴影 */
+        }
+
+
+        /*  =========================================================================
+            结果展示区域
+            ========================================================================= */
         #results {
-            background-color: #ecf0f1;
-            padding: 20px;
-            border-radius: 5px;
+            display: none;
+            background-color: rgba(249, 249, 249, 0.9); /* 结果区域背景色 */
+            padding: 35px; /* 结果区域 padding */
+            border-radius: 15px; /* 结果区域圆角 */
+            box-shadow: inset 0 5px 15px rgba(0,0,0,0.08); /* 结果区域内阴影 */
+            margin-top: 30px; /* 结果区域上边距 */
+            display: flex;
+            flex-direction: column;
+            opacity: 0; /* 初始透明度 */
+            transform: translateY(20px); /* 初始位置偏移 */
+            transition: opacity 0.5s ease-out, transform 0.5s ease-out; /* 显示动画 */
         }
+
+        #results.show {
+            display: flex; /* 显示结果区域 */
+            opacity: 1; /* 完全不透明 */
+            transform: translateY(0); /* 恢复到正常位置 */
+        }
+
+        #results > div {
+            margin-bottom: 30px; /* 结果区域子元素间距 */
+        }
+
+        #scoreChartCanvas {
+            width: 100%;
+            height: 350px; /* 条形图高度 */
+            margin-bottom: 30px; /* 条形图下边距 */
+            background-color: rgba(255,255,255,0.85); /* 图表背景 */
+            border-radius: 12px; /* 图表圆角 */
+            padding: 20px; /* 图表内边距 */
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1); /* 图表阴影 */
+        }
+
+        .detail-section {
+            display: flex;
+            gap: 30px; /* 详情部分左右间距 */
+            align-items: flex-start; /* 顶部对齐 */
+        }
+
+        .score-tables {
+            flex: 1.3; /* 成绩表格区域占比 */
+        }
+
+        .exam-papers {
+            flex: 1; /* 答题卡区域占比 */
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        /*  =========================================================================
+            表格样式
+            ========================================================================= */
         table {
             width: 100%;
             border-collapse: collapse;
+            margin-bottom: 25px; /* 表格下边距 */
+            box-shadow: 0 8px 20px rgba(0,0,0,0.15); /* 表格阴影 */
+            border-radius: 12px; /* 表格圆角 */
+            overflow: hidden; /* 裁剪圆角溢出 */
+            background-color: white; /* 表格背景色 */
+            animation: slideUp 0.7s ease-out forwards; /* 表格进入动画 */
+            transform: translateY(30px); /* 表格初始位置偏移 */
+            opacity: 0; /* 表格初始透明度 */
+            counter-reset: rowNumber; /* 初始化行号计数器 */
         }
+
+        @keyframes slideUp {
+            to {
+                transform: translateY(0);
+                opacity: 1;
+            }
+        }
+
         th, td {
-            border: 1px solid #bdc3c7;
-            padding: 10px;
+            border: none; /* 移除单元格边框 */
+            padding: 16px 20px; /* 单元格内边距 */
             text-align: left;
+            font-size: 1em; /* 单元格字体大小 */
         }
+
         th {
             background-color: #3498db;
             color: white;
+            font-weight: 500;
+            text-transform: uppercase;
+            letter-spacing: 1.1px;
         }
+
+        tbody tr:nth-child(even) {
+            background-color: #f8f8f8; /* 偶数行背景色 */
+        }
+
+        tbody tr:last-child td {
+            border-bottom: none; /* 最后一行底部边框 */
+        }
+
+        tbody tr td:first-child::before {
+            counter-increment: rowNumber;
+            content: counter(rowNumber);
+            display: inline-block;
+            margin-right: 10px;
+            color: #777;
+            font-size: 0.9em;
+        }
+
+
+        /*  =========================================================================
+            答题卡图片样式
+            ========================================================================= */
+        #imageContainer {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
         #imageContainer img {
-            max-width: 200px;
-            margin: 10px;
-            border: 1px solid #bdc3c7;
+            max-width: 95%; /* 答题卡图片最大宽度 */
+            border: 2px solid #eee;
+            border-radius: 12px;
+            margin-bottom: 20px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1); /* 答题卡图片阴影 */
+            transition: transform 0.3s ease; /* 图片形变过渡 */
         }
+
+        #imageContainer img:hover {
+            transform: scale(1.02); /* hover 时放大 */
+        }
+
+        /*  =========================================================================
+            学生信息和标题样式
+            ========================================================================= */
+        #studentInfo {
+            text-align: center;
+            font-size: 1.2em; /* 学生信息字体大小 */
+            color: #555;
+            margin-bottom: 30px; /* 学生信息下边距 */
+            animation: fadeInText 1s ease-out 0.3s forwards; /* 文本进入动画 */
+            opacity: 0; /* 初始透明度 */
+            transform: translateY(15px); /* 初始位置偏移 */
+        }
+
+        @keyframes fadeInText {
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        #studentInfo p {
+            margin: 10px 0; /* 学生信息段落间距 */
+            font-weight: 400;
+        }
+
+        h2, h3, h4, h5 {
+            color: #34495e; /* 详情标题颜色 */
+            margin-bottom: 20px; /* 详情标题下边距 */
+            text-align: left;
+            font-weight: 500;
+            letter-spacing: 1.1px;
+        }
+
+        h2 {
+            text-align: center; /* 二级标题居中 */
+            font-size: 2em; /* 二级标题字体 */
+            margin-bottom: 30px;
+        }
+
+        h3 {
+            font-size: 1.6em; /* 三级标题字体 */
+            margin-top: 30px; /* 三级标题上边距 */
+        }
+
+        h4 {
+            font-size: 1.3em; /* 四级标题字体 */
+            margin-top: 25px;
+        }
+
+        h5 {
+            font-size: 1.1em; /* 五级标题字体 */
+            margin-top: 20px;
+            color: #777;
+        }
+
+
+         /*  =========================================================================
+            按钮容器样式
+            ========================================================================= */
+        .button-container {
+            display: flex;
+            justify-content: center;
+            gap: 30px;
+            margin-top: 35px; /* 按钮容器上外边距 */
+            animation: fadeInUpButtons 1s ease-out 0.5s forwards; /* 按钮组进入动画 */
+            opacity: 0; /* 初始透明度 */
+            transform: translateY(30px); /* 初始位置偏移 */
+        }
+
+        @keyframes fadeInUpButtons {
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        /*  =========================================================================
+            响应式设计
+            ========================================================================= */
+        @media screen and (max-width: 1200px) {
+            .container {
+                padding: 35px;
+                margin: 20px;
+            }
+            .detail-section {
+                flex-direction: column; /* 小屏幕垂直布局 */
+                gap: 20px;
+            }
+            .score-tables, .exam-papers {
+                flex: 1; /* 平分空间 */
+            }
+            .form {
+                flex-direction: column; /* 表单项垂直排列 */
+                align-items: stretch; /* 拉伸对齐 */
+                gap: 20px;
+            }
+            input[type="text"], button {
+                width: 100%; /* 输入框和按钮宽度 */
+                max-width: none; /* 移除最大宽度限制 */
+            }
+        }
+
+        @media screen and (max-width: 768px) {
+            .container {
+                padding: 25px;
+                margin: 15px;
+                border-radius: 15px;
+            }
+            h1 {
+                font-size: 2.4em;
+                margin-bottom: 25px;
+            }
+            #results {
+                padding: 25px;
+                border-radius: 12px;
+            }
+            .button-container {
+                flex-direction: column; /* 按钮垂直排列 */
+                gap: 15px;
+            }
+        }
+
+        @media screen and (max-width: 576px) {
+            .container {
+                padding: 20px;
+                margin: 10px;
+                border-radius: 10px;
+            }
+            h1 {
+                font-size: 2em;
+                margin-bottom: 20px;
+            }
+            .form {
+                margin-bottom: 25px;
+            }
+            #results {
+                padding: 20px;
+                border-radius: 10px;
+            }
+            h2 {
+                font-size: 1.8em;
+            }
+            h3 {
+                font-size: 1.4em;
+            }
+            h4 {
+                font-size: 1.2em;
+            }
+            h5 {
+                font-size: 1em;
+            }
+        }
+
     </style>
 </head>
 <body>
@@ -74,32 +435,37 @@
         <h1>成绩查询系统</h1>
         <div class="form">
             <input type="text" id="name" placeholder="请输入姓名">
-            <select id="subject">
-                <option value="SUBJ01de4b004f054e76a1295ef0d83bccbb">英语</option>
-                <option value="SUBJ25df9928c00b4171b1f617635b033106">数学</option>
-                <option value="SUBJae5b7cb9071045219af1b71b74c7a2f7">语文</option>
-                <option value="SUBJ7f007a1596b2440c8d1202af182533ca">物理</option>
-                <option value="SUBJb6894c3db41c4cf785355dc6cb8e19fe">历史</option>
-                <option value="SUBJ4cbb9650a3ea41da894cefc41ce88d63">化学</option>
-                <option value="SUBJ4ab2cb65d5604ea78debe70f13eabf9e">道法</option>
-            </select>
-            <button id="submitBtn">查询成绩</button>
+            <button id="submitBtn">查询全部成绩</button>
         </div>
-        <div id="results" style="display: none;">
+
+        <div class="cf-turnstile" data-sitekey="0x4AAAAAAA1Lgw51wUi0_hHk" data-callback="onSubmit" data-theme="light"></div>
+
+        <div id="results" class="" style="display: none;">
             <h2>查询结果</h2>
             <div id="studentInfo"></div>
-            <h3>答题卡</h3>
-            <div id="imageContainer"></div>
-            <button id="exportImages">导出答题卡</button>
-            <h3>成绩详情</h3>
-            <div id="scoreDetails"></div>
-            <button id="exportExcel">导出成绩</button>
+            <div>
+                <h3>七科总成绩概览</h3>
+                <canvas id="scoreChartCanvas"></canvas>
+            </div>
+            <div class="detail-section">
+                <div class="score-tables">
+                    <h3>成绩详情</h3>
+                    <div id="scoreDetails"></div>
+                </div>
+                <div class="exam-papers">
+                    <h3>答题卡</h3>
+                    <div id="imageContainer"></div>
+                </div>
+            </div>
+            <div class="button-container">
+                <button id="exportImages">导出答题卡</button>
+                <button id="exportExcel">导出成绩表格</button>
+            </div>
         </div>
     </div>
 
     <script>
         const nameInput = document.getElementById('name');
-        const subjectSelect = document.getElementById('subject');
         const submitBtn = document.getElementById('submitBtn');
         const resultsSection = document.getElementById('results');
         const studentInfo = document.getElementById('studentInfo');
@@ -107,94 +473,233 @@
         const imageContainer = document.getElementById('imageContainer');
         const exportImagesBtn = document.getElementById('exportImages');
         const exportExcelBtn = document.getElementById('exportExcel');
+        const scoreChartCanvas = document.getElementById('scoreChartCanvas');
+        let scoreChart;
 
-        submitBtn.addEventListener('click', fetchResults);
+        const subjectCodes = {
+            '英语': 'SUBJ01de4b004f054e76a1295ef0d83bccbb',
+            '数学': 'SUBJ25df9928c00b4171b1f617635b033106',
+            '语文': 'SUBJae5b7cb9071045219af1b71b74c7a2f7',
+            '物理': 'SUBJ7f007a1596b2440c8d1202af182533ca',
+            '历史': 'SUBJb6894c3db41c4cf785355dc6cb8e19fe',
+            '化学': 'SUBJ4cbb9650a3ea41da894cefc41ce88d63',
+            '道法': 'SUBJ4ab2cb65d5604ea78debe70f13eabf9e'
+        };
+
+        submitBtn.addEventListener('click', () => {
+            if (!turnstile.getResponse()) {
+                alert('请先完成人机身份验证！');
+                return;
+            }
+            fetchResults();
+        });
 
         function fetchResults() {
             const name = nameInput.value;
-            const subject = subjectSelect.value;
 
-            if (!name || !subject) {
-                alert('请输入完整信息！');
+            if (!name) {
+                alert('请输入姓名！');
                 return;
             }
 
-            const apiUrl = `https://hx-api.tyhuixue.com/exam-service/subjectScoreModify/query?examId=EXAM95820a888ac6462da6d8fd21f0f64070&subjectId=${subject}&name=${encodeURIComponent(name)}`;
+            resultsSection.style.display = 'none';
+            studentInfo.innerHTML = '';
+            scoreDetails.innerHTML = '';
+            imageContainer.innerHTML = '';
+            if (scoreChart) {
+                scoreChart.destroy();
+                scoreChart = null;
+            }
 
-            fetch(apiUrl)
-                .then(response => response.json())
-                .then(data => {
-                    if (data.retCode === '000000' && data.result.length > 0) {
-                        displayResults(data.result[0]);
+            const fetchPromises = Object.entries(subjectCodes).map(([subjectName, subjectId]) => {
+                const apiUrl = `https://hx-api.tyhuixue.com/exam-service/subjectScoreModify/query?examId=EXAM95820a888ac6462da6d8fd21f0f64070&subjectId=${subjectId}&name=${encodeURIComponent(name)}`;
+                return fetch(apiUrl)
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.retCode === '000000' && data.result.length > 0) {
+                            return data.result[0];
+                        } else {
+                            return null;
+                        }
+                    })
+                    .catch(error => {
+                        console.error(`Error fetching ${subjectName} data:`, error);
+                        alert(`查询${subjectName}成绩失败，请稍后重试`);
+                        return null;
+                    });
+            });
+
+            Promise.all(fetchPromises)
+                .then(results => {
+                    const validResults = results.filter(result => result !== null && result !== undefined);
+                    if (validResults.length > 0) {
+                        displayMultiSubjectResults(validResults);
                     } else {
                         alert('未找到相关数据！');
+                        resultsSection.style.display = 'none';
                     }
-                })
-                .catch(error => {
-                    console.error('Error fetching data:', error);
-                    alert('查询失败，请稍后重试');
                 });
         }
 
-        function displayResults(result) {
-            const { examinee, subjectScore } = result;
 
+        function displayMultiSubjectResults(allSubjectResults) {
+            const student = allSubjectResults[0].examinee;
             studentInfo.innerHTML = `
-                <p>姓名: ${examinee.name || '暂无'}</p>
-                <p>学校: ${examinee.schoolName || '暂无'}</p>
-                <p>班级: ${examinee.clazzName || '暂无'}</p>
-                <p>总分: ${subjectScore.totalScore || '暂无'}</p>
+                <p>姓名: ${student.name || '暂无'}</p>
+                <p>学校: ${student.schoolName || '暂无'}</p>
+                <p>班级: ${student.clazzName || '暂无'}</p>
             `;
 
-            displayImages(subjectScore.imgUrlList);
-            displayScoreDetails(subjectScore);
+            const chartLabels = [];
+            const chartData = [];
+            const allScoreDetailsHTML = [];
+            const allImagesHTML = [];
 
-            resultsSection.style.display = 'block';
+            allSubjectResults.forEach(result => {
+                const { subjectScore, subject } = result;
+                const subjectName = Object.keys(subjectCodes).find(key => subjectCodes[key] === subject.subjectId) || subject.subjectName || '未知科目';
+
+                chartLabels.push(subjectName);
+                chartData.push(subjectScore.totalScore || 0);
+
+                allScoreDetailsHTML.push(`<div><h4>${subjectName} 成绩详情</h4>${createScoreTable(subjectName, subjectScore)}</div>`);
+                allImagesHTML.push(`<div><h5>${subjectName} 答题卡</h5>${displayImages(subjectScore.imgUrlList)}</div>`);
+            });
+
+            createScoreChart(chartLabels, chartData);
+
+            scoreDetails.innerHTML = allScoreDetailsHTML.join('');
+            imageContainer.innerHTML = allImagesHTML.join('');
+
+            resultsSection.classList.add('show'); // 使用 classList 添加 'show' 类来触发显示动画
         }
 
-        function displayImages(imgUrlList) {
-            imageContainer.innerHTML = '';
-            imgUrlList.forEach(img => {
-                const imgElement = document.createElement('img');
-                imgElement.src = img.imgUrl;
-                imgElement.alt = '答题卡';
-                imageContainer.appendChild(imgElement);
+
+        function createScoreChart(labels, data) {
+            const ctx = scoreChartCanvas.getContext('2d');
+            if (scoreChart) {
+                scoreChart.destroy();
+            }
+            scoreChart = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        label: '科目总分',
+                        data: data,
+                        backgroundColor: 'rgba(54, 162, 235, 0.8)',
+                        borderColor: 'rgba(54, 162, 235, 1)',
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            title: {
+                                display: true,
+                                text: '分数',
+                                font: {
+                                    size: 14,
+                                    weight: 'bold'
+                                }
+                            },
+                            ticks: {
+                                font: {
+                                    size: 12
+                                }
+                            }
+                        },
+                        x: {
+                            title: {
+                                display: true,
+                                text: '科目',
+                                font: {
+                                    size: 14,
+                                    weight: 'bold'
+                                }
+                            },
+                            ticks: {
+                                font: {
+                                    size: 12
+                                }
+                            }
+                        }
+                    },
+                    plugins: {
+                        legend: {
+                            display: false
+                        },
+                        title: {
+                            display: false,
+                        }
+                    },
+                    animation: {
+                        duration: 1500,
+                        easing: 'easeOutBounce'
+                    }
+                }
             });
         }
 
-        function displayScoreDetails(subjectScore) {
-            scoreDetails.innerHTML = '';
 
-            const kgScoreJson = JSON.parse(subjectScore.kgScoreJson);
-            if (kgScoreJson && kgScoreJson.items) {
-                scoreDetails.appendChild(createScoreTable('选择题', kgScoreJson.items));
+        function displayImages(imgUrlList) {
+            if (!imgUrlList || imgUrlList.length === 0) {
+                return '<p>暂无答题卡图片</p>';
             }
-
-            const zgScoreJson = JSON.parse(subjectScore.zgScoreJson);
-            if (zgScoreJson && zgScoreJson.items) {
-                scoreDetails.appendChild(createScoreTable('主观题', zgScoreJson.items));
-            }
+            let imagesHTML = '';
+            imgUrlList.forEach(img => {
+                imagesHTML += `<img src="${img.imgUrl}" alt="答题卡"/>`;
+            });
+            return imagesHTML;
         }
 
-        function createScoreTable(title, items) {
-            const table = document.createElement('table');
-            table.innerHTML = `
-                <thead>
-                    <tr><th colspan="3">${title}</th></tr>
-                    <tr><th>序号</th><th>题目</th><th>得分</th></tr>
-                </thead>
-                <tbody>
-                    ${items.map((item, index) => `
-                        <tr>
-                            <td>${index + 1}</td>
-                            <td>${item.title || item.item}</td>
-                            <td>${item.score}</td>
-                        </tr>
-                    `).join('')}
-                </tbody>
+
+        function createScoreTable(subjectName, subjectScore) {
+            let tableHTML = '';
+            let hasData = false;
+
+            const kgScoreJson = subjectScore.kgScoreJson ? JSON.parse(subjectScore.kgScoreJson) : null;
+            if (kgScoreJson && kgScoreJson.items && kgScoreJson.items.length > 0) {
+                hasData = true;
+                tableHTML += `<h4>${subjectName} - 选择题</h4>${generateTableHTML('选择题', kgScoreJson.items)}`;
+            }
+
+            const zgScoreJson = subjectScore.zgScoreJson ? JSON.parse(subjectScore.zgScoreJson) : null;
+            if (zgScoreJson && zgScoreJson.items && zgScoreJson.items.length > 0) {
+                hasData = true;
+                tableHTML += `<h4>${subjectName} - 主观题</h4>${generateTableHTML('主观题', zgScoreJson.items)}`;
+            }
+
+            if (!hasData) {
+                return '<p>暂无成绩详情</p>';
+            }
+
+            return `<div>${tableHTML}</div>`;
+        }
+
+        function generateTableHTML(title, items) {
+            return `
+                <table>
+                    <thead>
+                        <tr><th colspan="3">${title}</th></tr>
+                        <tr><th>序号</th><th>题目</th><th>得分</th></tr>
+                    </thead>
+                    <tbody>
+                        ${items.map((item, index) => `
+                            <tr>
+                                <td></td>
+                                <td>${item.title || item.item || '未知题目'}</td>
+                                <td>${item.score}</td>
+                            </tr>
+                        `).join('')}
+                    </tbody>
+                </table>
             `;
-            return table;
         }
+
 
         exportImagesBtn.addEventListener('click', () => {
             const images = Array.from(imageContainer.querySelectorAll('img'));
@@ -221,21 +726,26 @@
         });
 
         exportExcelBtn.addEventListener('click', () => {
-            const tables = scoreDetails.querySelectorAll('table');
-            if (tables.length === 0) {
-                alert('没有可导出的成绩数据');
-                return;
-            }
+            let wb = XLSX.utils.book_new();
 
-            const wb = XLSX.utils.book_new();
-            
-            tables.forEach((table, index) => {
-                const ws = XLSX.utils.table_to_sheet(table);
-                XLSX.utils.book_append_sheet(wb, ws, `成绩详情_${index + 1}`);
+            const chartDataSheet = XLSX.utils.aoa_to_sheet([['科目', '总分'], ...scoreChart.data.labels.map((label, index) => [label, scoreChart.data.datasets[0].data[index]])]);
+            XLSX.utils.book_append_sheet(wb, chartDataSheet, '总成绩概览');
+
+
+            const detailSections = scoreDetails.querySelectorAll('div>div');
+            detailSections.forEach((section, index) => {
+                const subjectName = section.querySelector('h4').textContent.split(' - ')[0];
+                const tables = section.querySelectorAll('table');
+                tables.forEach((table, tableIndex) => {
+                    const ws = XLSX.utils.table_to_sheet(table);
+                    const sheetName = `${subjectName}_${table.querySelector('thead tr th').textContent}`;
+                    XLSX.utils.book_append_sheet(wb, ws, sheetName);
+                });
             });
 
             XLSX.writeFile(wb, '成绩详情.xlsx');
         });
+
     </script>
 </body>
 </html>
