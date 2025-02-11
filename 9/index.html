@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="zh-CN">
 <head>
@@ -17,7 +16,7 @@
 
     body {
         font-family: Arial, sans-serif;
-        background-image: url('https://s2.loli.net/2024/11/02/z52wsQY7Frg4t9Z.jpg');
+        background-image: url('https://example.com/your-background-image.jpg');
         background-size: cover;
         background-attachment: fixed;
         color: #333333;
@@ -29,7 +28,8 @@
         max-width: 1200px;
         margin: 50px auto;
         padding: 20px;
-        background-color: rgba(255, 255, 255, 0.9);
+        background-color: rgba(255, 255, 255, 0.3);
+        backdrop-filter: blur(10px);
         border-radius: 20px;
         box-shadow: 0 8px 20px rgba(0, 0, 0, 0.1);
     }
@@ -73,7 +73,7 @@
         padding: 12px;
         font-size: 16px;
         border: 1px solid rgba(0, 0, 0, 0.2);
-        background-color: #ffffff;
+        background-color: rgba(255, 255, 255, 0.8);
         color: #333333;
         border-radius: 12px;
         transition: all 0.3s ease;
@@ -119,6 +119,7 @@
         border-collapse: collapse;
         margin-top: 20px;
         margin-bottom: 20px;
+        background-color: rgba(255, 255, 255, 0.8);
     }
 
     th, td {
@@ -128,7 +129,7 @@
     }
 
     th {
-        background-color: #f2f2f2;
+        background-color: rgba(242, 242, 242, 0.8);
         font-weight: bold;
     }
 
@@ -195,6 +196,15 @@
         100% { transform: rotate(360deg); }
     }
 
+    .error-message {
+        background-color: rgba(255, 0, 0, 0.1);
+        color: #ff0000;
+        padding: 10px;
+        border-radius: 8px;
+        margin-top: 20px;
+        text-align: center;
+    }
+
     @media (max-width: 768px) {
         .container {
             width: 95%;
@@ -235,6 +245,8 @@
                 <button id="submitBtn" disabled>查询成绩</button>
             </div>
 
+            <div id="error-message" class="error-message" style="display: none;"></div>
+
             <div class="results" id="results" style="display: none;">
                 <div class="results-left">
                     <h3>学生信息</h3>
@@ -266,6 +278,15 @@
     <script src="https://challenges.cloudflare.com/turnstile/v0/api.js" async defer></script>
 
     <script>
+        // 显示当前时间
+        function updateTime() {
+            const now = new Date();
+            const timeString = now.toLocaleString('zh-CN', { hour12: false });
+            document.getElementById('current-time').textContent = timeString;
+        }
+        updateTime();
+        setInterval
+            
         // 显示当前时间
         function updateTime() {
             const now = new Date();
