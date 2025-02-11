@@ -3,704 +3,188 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>定边七中｜答题卡查询 - 玻璃质感 (优化版)</title>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.7.1/jszip.min.js"></script>
+    <title>七中网部｜成绩查询</title>
     <style>
-        /* === CSS Variables for Theming === */
         :root {
-            --bg-image: url('https://source.unsplash.com/1600x900/?modern+classroom');
-            --bg-overlay: rgba(0, 0, 0, 0.4);
-            --glass-bg: rgba(255, 255, 255, 0.1);
-            --glass-border: rgba(255, 255, 255, 0.2);
-            --glass-box-shadow: 0 0 20px rgba(0, 0, 0, 0.3);
-            --glass-backdrop-filter: blur(10px);
-            --text-color-light: #e0e0e0;
-            --text-color-white: #fff;
-            --text-color-dimmed: #ddd;
-            --header-border-color: rgba(255, 255, 255, 0.3);
-            --input-button-bg: rgba(255, 255, 255, 0.2);
-            --input-button-focus-border: rgba(255, 255, 255, 0.5);
-            --input-button-focus-bg: rgba(255, 255, 255, 0.3);
-            --button-primary-bg: rgba(0, 150, 200, 0.5);
-            --button-primary-hover-bg: rgba(0, 180, 240, 0.6);
-            --button-disabled-bg: rgba(100, 100, 100, 0.3);
-            --table-bg: rgba(255, 255, 255, 0.05);
-            --table-row-even-bg: rgba(255, 255, 255, 0.08);
-            --table-header-bg: rgba(0, 150, 200, 0.3);
-            --error-bg: rgba(255, 235, 238, 0.3);
-            --error-text: #ffcdd2;
-            --export-button-bg: rgba(0, 120, 160, 0.5);
-            --export-button-hover-bg: rgba(0, 150, 200, 0.6);
+            --primary-color: #000000;
+            --secondary-color: #ffffff;
+            --accent-color: rgba(240, 240, 240, 0.8);
+            --border-color: rgba(204, 204, 204, 0.5);
         }
-
-        /* === Global Styles === */
+        
         * {
+            box-sizing: border-box;
             margin: 0;
             padding: 0;
-            box-sizing: border-box;
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
         }
-
+        
         body {
-            background: var(--bg-image) no-repeat center center fixed;
+            font-family: 'Helvetica Neue', Arial, sans-serif;
+            line-height: 1.6;
+            color: var(--primary-color);
+            background-image: url('https://pic1.imgdb.cn/item/67a8be16d0e0a243d4fd9740.jpg');
             background-size: cover;
-            display: flex;
-            justify-content: center;
-            align-items: center;
+            background-position: center;
+            background-attachment: fixed;
             min-height: 100vh;
-            backdrop-filter: blur(5px);
-            color: var(--text-color-light);
-            overflow: hidden;
-        }
-
-        body::before {
-            content: '';
-            position: fixed;
-            top: 0;
-            right: 0;
-            bottom: 0;
-            left: 0;
-            background: var(--bg-overlay);
-            z-index: -1;
-        }
-
-        .container {
-            background: var(--glass-bg);
-            border-radius: 15px;
-            padding: 40px;
-            box-shadow: var(--glass-box-shadow);
-            backdrop-filter: var(--glass-backdrop-filter);
-            border: 1px solid var(--glass-border);
-            text-align: center;
-            width: 95%; /* Adjusted for better responsiveness */
-            max-width: 1200px;
-            margin: 20px;
-            color: var(--text-color-white);
-        }
-
-        header {
-            padding-bottom: 20px;
-            margin-bottom: 30px;
-            border-bottom: 1px solid var(--header-border-color);
-        }
-
-        header h1 {
-            font-size: 2.5em;
-            font-weight: 300;
-            letter-spacing: 0.1em;
-            text-shadow: 2px 2px 3px rgba(0, 0, 0, 0.3);
-        }
-
-        main {
-            padding: 20px 0;
-        }
-
-        h2, h3 {
-            color: var(--text-color-white);
-            font-weight: 300;
-            margin-bottom: 20px;
-            text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.5);
-        }
-
-        p {
-            font-size: 1.1em;
-            margin-bottom: 15px;
-            color: var(--text-color-dimmed);
-            text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.5);
-        }
-
-        /* === Form Styles === */
-        .form {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            gap: 25px;
-            margin-bottom: 30px;
-        }
-
-        .form input, .form select, .form button {
-            padding: 15px 20px;
-            border-radius: 10px;
-            border: none;
-            background: var(--input-button-bg);
-            color: var(--text-color-white);
-            font-size: 1em;
-            width: 100%;
-            max-width: 400px;
-            backdrop-filter: blur(5px);
-            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
-            transition: all 0.3s ease;
-        }
-
-        .form input::placeholder, .form select {
-            color: var(--text-color-dimmed); /* Consistent dimmed color */
-        }
-
-        .form input:focus, .form select:focus {
-            outline: none;
-            border: 1px solid var(--input-button-focus-border);
-            background: var(--input-button-focus-bg);
-            box-shadow: 0 6px 8px rgba(0,0,0,0.2);
-        }
-
-        .form button {
-            background-color: var(--button-primary-bg);
-            color: var(--text-color-white);
-            cursor: pointer;
-            font-weight: bold;
-            text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.7);
-        }
-
-        .form button:hover:not(:disabled) {
-            background-color: var(--button-primary-hover-bg);
-            transform: translateY(-2px);
-            box-shadow: 0 6px 10px rgba(0,0,0,0.3);
-        }
-
-        .form button:disabled {
-            background-color: var(--button-disabled-bg);
-            cursor: not-allowed;
-            color: #ccc;
-        }
-
-        /* === Results Styles === */
-        .results {
-            margin-top: 30px;
-            padding: 30px;
-            background: var(--glass-bg);
-            border-radius: 12px;
-            box-shadow: inset 0 0 10px rgba(0, 0, 0, 0.2);
-            backdrop-filter: var(--glass-backdrop-filter);
-            border: 1px solid var(--glass-border);
-            animation: fadeIn 0.5s ease-out;
-            display: none;
-            text-align: left;
-        }
-
-        @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(20px); }
-            to { opacity: 1; transform: translateY(0); }
-        }
-
-        .results h2 {
-            font-size: 2em;
-            margin-bottom: 20px;
-            border-bottom: 1px dashed var(--header-border-color); /* Reused header border color */
-            padding-bottom: 10px;
-        }
-
-        .results h3 {
-            font-size: 1.6em;
-            margin-top: 25px;
-            margin-bottom: 15px;
-        }
-
-        .results p {
-            font-size: 1em;
-            margin-bottom: 10px;
-        }
-
-        /* === Table Styles === */
-        table {
-            width: 100%;
-            border-collapse: collapse;
-            margin: 20px 0; /* Simplified margin */
-            border-radius: 10px;
-            overflow: hidden;
-            box-shadow: 0 2px 5px rgba(0,0,0,0.3);
-            background: var(--table-bg);
-            backdrop-filter: var(--glass-backdrop-filter);
-        }
-
-        th, td {
-            padding: 12px 15px;
-            text-align: left;
-            border-bottom: 1px solid var(--glass-border); /* Reused glass border color */
-        }
-
-        th {
-            background-color: var(--table-header-bg);
-            color: var(--text-color-white);
-            font-weight: bold;
-            text-transform: uppercase;
-        }
-
-        tbody tr:nth-child(even) {
-            background-color: var(--table-row-even-bg);
-        }
-
-        /* === Image Container Styles === */
-        #imageContainer {
-            display: flex;
-            justify-content: center;
-            flex-wrap: wrap;
-            gap: 15px;
-            margin-top: 20px;
-        }
-
-        #imageContainer img {
-            max-width: 180px;
-            border-radius: 8px;
-            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
-            transition: transform 0.3s ease, box-shadow 0.3s ease;
-            cursor: pointer;
-            border: 1px solid var(--glass-border); /* Reused glass border */
-        }
-
-        #imageContainer img:hover {
-            transform: scale(1.05);
-            box-shadow: 0 6px 12px rgba(0, 0, 0, 0.4);
-        }
-
-        /* === Enlarged Image Overlay === */
-        .enlarged-image-overlay {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background-color: rgba(0, 0, 0, 0.9);
             display: flex;
             justify-content: center;
             align-items: center;
-            z-index: 1000;
-            opacity: 0;
-            pointer-events: none;
-            transition: opacity 0.3s ease;
-        }
-
-        .enlarged-image-overlay.show {
-            opacity: 1;
-            pointer-events: auto;
-        }
-
-        .enlarged-image-container {
-            position: relative;
-            max-width: 95%;
-            max-height: 95%;
-            transform: scale(0.95);
-            transition: transform 0.3s ease;
-        }
-
-        .enlarged-image-overlay.show .enlarged-image-container {
-            transform: scale(1);
-        }
-
-        .enlarged-image-container img {
-            max-width: 100%;
-            max-height: 90vh;
-            object-fit: contain;
-            border-radius: 10px;
-            box-shadow: 0 8px 16px rgba(0,0,0,0.6);
-        }
-
-        .close-button {
-            position: absolute;
-            top: 20px;
-            right: 20px;
-            background: transparent;
-            border: none;
-            color: var(--text-color-white); /* Reused text color */
-            font-size: 2em;
-            cursor: pointer;
-            opacity: 0.7;
-            transition: opacity 0.3s ease;
-        }
-
-        .close-button:hover {
-            opacity: 1;
-        }
-
-        /* === Error Message === */
-        .error-message {
-            background-color: var(--error-bg);
-            color: var(--error-text);
-            padding: 15px;
-            border-radius: 10px;
-            margin-top: 25px;
-            border: 1px solid var(--glass-border); /* Reused glass border */
-            backdrop-filter: var(--glass-backdrop-filter); /* Reused backdrop filter */
-            box-shadow: 0 4px 8px rgba(0,0,0,0.2);
-            animation: shake 0.82s cubic-bezier(.36,.07,.19,.97) both;
-        }
-
-        @keyframes shake {
-            10%, 90% { transform: translate3d(-1px, 0, 0); }
-            20%, 80% { transform: translate3d(2px, 0, 0); }
-            30%, 50%, 70% { transform: translate3d(-4px, 0, 0); }
-            40%, 60% { transform: translate3d(4px, 0, 0); }
-        }
-
-        /* === Footer Styles === */
-        footer {
-            text-align: center;
             padding: 20px;
-            margin-top: 40px;
-            color: var(--text-color-dimmed); /* Reused dimmed text color */
-            font-size: 0.9em;
-            text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.5);
         }
-
-        footer a {
-            color: var(--text-color-white); /* Reused white text color */
-            text-decoration: none;
+        
+        .container {
+            max-width: 800px;
+            width: 100%;
+            background-color: rgba(255, 255, 255, 0.9);
+            backdrop-filter: blur(0px);
+            border-radius: 0px;
+            overflow: hidden;
+            box-shadow: 0 10px 0px rgba(0, 0, 0, 0.1);
+        }
+        
+        header {
+            background-color: var(--primary-color);
+            color: var(--secondary-color);
+            padding: 3rem 2rem;
+            text-align: center;
+            clip-path: polygon(0 0, 100% 0, 100% 85%, 0 100%);
+        }
+        
+        h1 {
+            font-size: 2.5rem;
+            font-weight: 300;
+            letter-spacing: 0.05em;
+            margin-bottom: 0.5rem;
+        }
+        
+        .subtitle {
+            font-size: 1rem;
+            font-weight: 400;
             opacity: 0.8;
         }
-
-        footer a:hover {
-            text-decoration: underline;
-            opacity: 1;
+        
+        main {
+            padding: 3rem 2rem;
         }
-
-        /* === Export Button Styles === */
-        .export-button {
-            padding: 12px 25px;
-            background-color: var(--export-button-bg);
-            color: var(--text-color-white); /* Reused white text color */
-            border: none;
-            border-radius: 8px;
-            cursor: pointer;
-            font-size: 0.9em;
-            transition: background-color 0.3s ease, transform 0.2s ease;
-            margin-top: 25px;
-            box-shadow: 0 3px 6px rgba(0,0,0,0.2);
-            backdrop-filter: var(--glass-backdrop-filter); /* Reused backdrop filter */
+        
+        .options {
+            display: grid;
+            gap: 1.5rem;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
         }
-
-        .export-button:hover {
-            background-color: var(--export-button-hover-bg);
-            transform: translateY(-1px);
-            box-shadow: 0 4px 8px rgba(0,0,0,0.3);
+        
+        .option {
+            background-color: var(--accent-color);
+            border: 1px solid var(--border-color);
+            border-radius: 20px;
+            padding: 1.5rem;
+            text-align: center;
+            text-decoration: none;
+            color: var(--primary-color);
+            transition: all 0.3s ease;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            min-height: 150px;
+            position: relative;
+            overflow: hidden;
         }
-
-        /* === Responsive Design === */
+        
+        .option::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: radial-gradient(circle, rgba(255,255,255,0.3) 0%, rgba(255,255,255,0) 70%);
+            transform: scale(0);
+            transition: transform 0.6s ease-out;
+        }
+        
+        .option:hover::before {
+            transform: scale(1);
+        }
+        
+        .option:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+        }
+        
+        .option-title {
+            font-size: 1.25rem;
+            font-weight: 500;
+            margin-bottom: 0.5rem;
+            position: relative;
+            z-index: 1;
+        }
+        
+        .option-description {
+            font-size: 0.9rem;
+            opacity: 0.7;
+            position: relative;
+            z-index: 1;
+        }
+        
+        footer {
+            background-color: var(--primary-color);
+            color: var(--secondary-color);
+            text-align: center;
+            padding: 1rem;
+            font-size: 0.9rem;
+            clip-path: polygon(0 15%, 100% 0, 100% 100%, 0 100%);
+        }
+        
         @media (max-width: 768px) {
             .container {
-                width: 95%;
-                padding: 30px;
-                margin: 15px;
+                border-radius: 20px;
             }
-
-            header h1 {
-                font-size: 2em;
+            
+            header {
+                padding: 2rem 1.5rem;
             }
-
-            .form {
-                gap: 20px;
+            
+            h1 {
+                font-size: 2rem;
             }
-
-            .form input, .form select, .form button {
-                max-width: 100%;
-                padding: 12px 15px;
-                font-size: 0.9em;
+            
+            main {
+                padding: 2rem 1rem;
             }
-
-            .results {
-                padding: 20px;
-            }
-
-            .results h2 {
-                font-size: 1.8em;
-            }
-
-            .results h3 {
-                font-size: 1.4em;
-            }
-
-            p {
-                font-size: 1em;
-            }
-
-            table {
-                font-size: 0.9em;
-            }
-
-            th, td {
-                padding: 10px;
-            }
-
-            #imageContainer img {
-                max-width: 140px;
-            }
-
-            .export-button {
-                font-size: 0.8em;
-                padding: 10px 20px;
+            
+            .options {
+                grid-template-columns: 1fr;
             }
         }
     </style>
 </head>
 <body>
-<div class="container">
-    <header>
-        <h1>成绩查询系统</h1>
-    </header>
-
-    <main>
-        <div class="form">
-            <input type="text" id="name" placeholder="请输入学生姓名">
-            <button id="submitBtn">查询全部成绩</button>
-        </div>
-
-        <div class="results" id="results">
-            <h2>查询结果</h2>
-            <p id="studentName"></p>
-            <p id="studentSchool"></p>
-            <p id="studentClass"></p>
-            <p id="totalScore"></p>
-
-            <h3>答题卡</h3>
-            <div id="imageContainer"></div>
-            <button id="exportImages" class="export-button">导出答题卡</button>
-
-            <h3>成绩详情</h3>
-            <div id="scoreDetails"></div>
-            <button id="exportExcel" class="export-button">导出详细成绩</button>
-        </div>
-    </main>
-
-    <footer>
-        &copy; 定边七中 - 界面设计灵感来自 <a href="https://openai.com" target="_blank">OpenAI</a>
-    </footer>
-
-</div>
-
-<script>
-    const nameInput = document.getElementById("name");
-    const submitBtn = document.getElementById("submitBtn");
-    const resultsSection = document.getElementById("results");
-    const studentName = document.getElementById("studentName");
-    const studentSchool = document.getElementById("studentSchool");
-    const studentClass = document.getElementById("studentClass");
-    const totalScore = document.getElementById("totalScore");
-    const scoreDetails = document.getElementById("scoreDetails");
-    const imageContainer = document.getElementById("imageContainer");
-    const exportImagesBtn = document.getElementById("exportImages");
-    const exportExcelBtn = document.getElementById("exportExcel");
-
-    const subjectCodes = {
-        '英语': 'SUBJ01de4b004f054e76a1295ef0d83bccbb',
-        '数学': 'SUBJ25df9928c00b4171b1f617635b033106',
-        '语文': 'SUBJae5b7cb9071045219af1b71b74c7a2f7',
-        '物理': 'SUBJ7f007a1596b2440c8d1202af182533ca',
-        '历史': 'SUBJb6894c3db41c4cf785355dc6cb8e19fe',
-        '化学': 'SUBJ4cbb9650a3ea41da894cefc41ce88d63',
-        '道法': 'SUBJ4ab2cb65d5604ea78debe70f13eabf9e'
-    };
-
-    submitBtn.addEventListener("click", fetchAllSubjectResults);
-
-    async function fetchAllSubjectResults() { // Make fetchAllSubjectResults async
-        const name = nameInput.value.trim();
-
-        if (!name) {
-            alert("请输入学生姓名！");
-            return;
-        }
-
-        resultsSection.style.display = "none";
-        imageContainer.innerHTML = "";
-        scoreDetails.innerHTML = "";
-
-        const results = await Promise.all(Object.values(subjectCodes).map(async subjectId => { // Use async map
-            const apiUrl = `https://hx-api.tyhuixue.com/exam-service/subjectScoreModify/query?examId=EXAM95820a888ac6462da6d8fd21f0f64070&subjectId=${subjectId}&name=${encodeURIComponent(name)}`;
-            try {
-                const response = await fetch(apiUrl, { credentials: 'omit' }); // 添加 credentials: 'omit'
-                const data = await response.json(); // Await response.json()
-                return (data.retCode === "000000" && data.result.length > 0) ? data.result[0] : null;
-            } catch (error) {
-                console.error("Error fetching data:", error);
-                return null;
-            }
-        }));
-
-        const validResults = results.filter(result => result != null);
-        console.log("fetchAllSubjectResults - validResults after filter:", validResults); // DEBUG LOG: Log validResults
-        if (validResults.length > 0) {
-            displayMultiSubjectResults(validResults);
-        } else {
-            alert("未找到相关数据！请检查姓名是否正确。");
-            resultsSection.style.display = "none";
-        }
-        return results; // Return results for logging purposes
-    }
-
-
-    function displayMultiSubjectResults(subjectResults) {
-        const examinee = subjectResults[0].examinee;
-
-        studentName.textContent = `姓名: ${examinee.name || "暂无"}`;
-        studentSchool.textContent = `学校: ${examinee.schoolName || "暂无"}`;
-        studentClass.textContent = `班级: ${examinee.clazzName || "暂无"}`;
-
-        let totalAvgScore = 0;
-        let validSubjectCount = 0;
-
-        subjectResults.forEach(result => {
-            if (result && result.subjectScore) {
-                totalAvgScore += parseFloat(result.subjectScore.totalScore || 0);
-                validSubjectCount++;
-            }
-        });
-
-        totalScore.textContent = `平均分: ${(validSubjectCount > 0 ? (totalAvgScore / validSubjectCount).toFixed(2) : "暂无")}`;
-
-        imageContainer.innerHTML = "";
-        scoreDetails.innerHTML = "";
-
-        console.log("displayMultiSubjectResults - subjectResults:", subjectResults); // DEBUG LOG: Log the entire array
-
-        subjectResults.forEach(result => {
-            console.log("displayMultiSubjectResults - current result:", result); // DEBUG LOG: Log each 'result' object
-
-            if (result) {
-                // Error occurs here:
-                const subjectName = Object.keys(subjectCodes).find(key => subjectCodes[key] === result.subject.subjectId) || result.subject.subjectName || '未知科目';
-
-                if (result.subjectScore.imgUrlList && result.subjectScore.imgUrlList.length > 0) {
-                    const subjectImageHeader = document.createElement('h3');
-                    subjectImageHeader.textContent = `${subjectName} 答题卡`;
-                    imageContainer.appendChild(subjectImageHeader);
-
-                    result.subjectScore.imgUrlList.forEach(img => {
-                        const imgElement = document.createElement("img");
-                        imgElement.src = img.imgUrl;
-                        imgElement.alt = `${subjectName} 答题卡`;
-                        imgElement.addEventListener("click", () => enlargeImage(img.imgUrl));
-                        imageContainer.appendChild(imgElement);
-                    });
-                }
-
-                const subjectScoreHeader = document.createElement('h3');
-                subjectScoreHeader.textContent = `${subjectName} 成绩详情`;
-                scoreDetails.appendChild(subjectScoreHeader);
-
-                const kgScoreJson = result.subjectScore.kgScoreJson ? JSON.parse(result.subjectScore.kgScoreJson) : null;
-                if (kgScoreJson && kgScoreJson.items) {
-                    scoreDetails.appendChild(createScoreTable(`${subjectName} - 选择题`, kgScoreJson.items));
-                }
-
-                const zgScoreJson = result.subjectScore.zgScoreJson ? JSON.parse(subjectScore.zgScoreJson) : null;
-                if (zgScoreJson && zgScoreJson.items) {
-                    scoreDetails.appendChild(createScoreTable(`${subjectName} - 主观题`, zgScoreJson.items));
-                }
-            }
-        });
-
-        resultsSection.style.display = "block";
-    }
-
-
-    function createScoreTable(title, items) {
-        const table = document.createElement("table");
-        const thead = document.createElement("thead");
-        const tbody = document.createElement("tbody");
-
-        const titleRow = document.createElement("tr");
-        const titleCell = document.createElement("th");
-        titleCell.colSpan = 3;
-        titleCell.textContent = title;
-        titleRow.appendChild(titleCell);
-        thead.appendChild(titleRow);
-
-        const headerRow = document.createElement("tr");
-        ["序号", "题目", "得分"].forEach(text => {
-            const th = document.createElement("th");
-            th.textContent = text;
-            headerRow.appendChild(th);
-        });
-        thead.appendChild(headerRow);
-
-        items.forEach((item, index) => {
-            const row = document.createElement("tr");
-            const indexCell = document.createElement("td");
-            const itemCell = document.createElement("td");
-            const scoreCell = document.createElement("td");
-
-            indexCell.textContent = index + 1;
-            itemCell.textContent = item.title || item.item;
-            scoreCell.textContent = item.score;
-
-            row.append(indexCell, itemCell, scoreCell);
-            tbody.appendChild(row);
-        });
-
-        table.append(thead, tbody);
-        return table;
-    }
-
-
-    function enlargeImage(src) {
-        const overlay = document.createElement("div");
-        overlay.className = "enlarged-image-overlay";
-
-        const container = document.createElement("div");
-        container.className = "enlarged-image-container";
-
-        const img = document.createElement("img");
-        img.src = src;
-
-        const closeBtn = document.createElement("button");
-        closeBtn.className = "close-button";
-        closeBtn.innerHTML = "&times;";
-        closeBtn.addEventListener("click", () => {
-            overlay.classList.remove('show');
-            container.style.transform = "scale(0.95)";
-            setTimeout(() => overlay.remove(), 300);
-        });
-
-        container.append(img, closeBtn);
-        overlay.appendChild(container);
-        document.body.appendChild(overlay);
-        overlay.classList.add('show');
-    }
-
-
-    exportImagesBtn.addEventListener("click", () => {
-        const images = Array.from(imageContainer.querySelectorAll("img"));
-        if (!images.length) {
-            alert("没有可导出的答题卡图片");
-            return;
-        }
-
-        const zip = new JSZip();
-        Promise.all(images.map((img, index) =>
-            fetch(img.src)
-                .then(res => res.blob())
-                .then(blob => zip.file(`答题卡_${index + 1}.jpg`, blob))
-        )).then(() =>
-            zip.generateAsync({ type: "blob" }).then(content => {
-                const a = document.createElement("a");
-                a.href = URL.createObjectURL(content);
-                a.download = "答题卡.zip";
-                a.click();
-            })
-        );
-    });
-
-
-    exportExcelBtn.addEventListener("click", () => {
-        const tables = scoreDetails.querySelectorAll("table");
-        if (!tables.length) {
-            alert("没有可导出的成绩数据");
-            return;
-        }
-
-        const wb = XLSX.utils.book_new();
-
-        tables.forEach((table) => {
-            const ws = XLSX.utils.table_to_sheet(table);
-            const subjectName = table.querySelector('th[colspan="3"]').textContent.split(' - ')[0];
-            const tableType = table.querySelector('th[colspan="3"]').textContent.split(' - ')[1];
-            const sheetName = `${subjectName}_${tableType}`;
-
-            XLSX.utils.book_append_sheet(wb, ws, sheetName);
-        });
-
-        XLSX.writeFile(wb, "成绩详情.xlsx");
-    });
-</script>
+    <div class="container">
+        <header>
+            <h1>定边七中查询</h1>
+            <p class="subtitle">关注公众号：七中网部</p>
+        </header>
+        <main>
+            <div class="options">
+                <a href="/9" class="option">
+                    <div class="option-title">九年级查询</div>
+                    <div class="option-description">2024—2025期末成绩</div>
+                </a>
+                <a href="/8" class="option">
+                    <div class="option-title">八年级查询</div>
+                    <div class="option-description">2024—2025期末成绩</div>
+                </a>
+                <a href="/7" class="option">
+                    <div class="option-title">七年级查询</div>
+                    <div class="option-description">2024—2025期末成绩</div>
+                </a>
+            </div>
+        </main>
+        <footer>
+            &copy; 2025 七中网部 版权所有
+        </footer>
+    </div>
 </body>
 </html>
