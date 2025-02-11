@@ -1,706 +1,737 @@
 <!DOCTYPE html>
-<html lang="zh-CN">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>定边七中｜答题卡查询 - 玻璃质感 (优化版)</title>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.7.1/jszip.min.js"></script>
-    <style>
-        /* === CSS Variables for Theming === */
-        :root {
-            --bg-image: url('https://source.unsplash.com/1600x900/?modern+classroom');
-            --bg-overlay: rgba(0, 0, 0, 0.4);
-            --glass-bg: rgba(255, 255, 255, 0.1);
-            --glass-border: rgba(255, 255, 255, 0.2);
-            --glass-box-shadow: 0 0 20px rgba(0, 0, 0, 0.3);
-            --glass-backdrop-filter: blur(10px);
-            --text-color-light: #e0e0e0;
-            --text-color-white: #fff;
-            --text-color-dimmed: #ddd;
-            --header-border-color: rgba(255, 255, 255, 0.3);
-            --input-button-bg: rgba(255, 255, 255, 0.2);
-            --input-button-focus-border: rgba(255, 255, 255, 0.5);
-            --input-button-focus-bg: rgba(255, 255, 255, 0.3);
-            --button-primary-bg: rgba(0, 150, 200, 0.5);
-            --button-primary-hover-bg: rgba(0, 180, 240, 0.6);
-            --button-disabled-bg: rgba(100, 100, 100, 0.3);
-            --table-bg: rgba(255, 255, 255, 0.05);
-            --table-row-even-bg: rgba(255, 255, 255, 0.08);
-            --table-header-bg: rgba(0, 150, 200, 0.3);
-            --error-bg: rgba(255, 235, 238, 0.3);
-            --error-text: #ffcdd2;
-            --export-button-bg: rgba(0, 120, 160, 0.5);
-            --export-button-hover-bg: rgba(0, 150, 200, 0.6);
-        }
-
-        /* === Global Styles === */
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-        }
-
-        body {
-            background: var(--bg-image) no-repeat center center fixed;
-            background-size: cover;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            min-height: 100vh;
-            backdrop-filter: blur(5px);
-            color: var(--text-color-light);
-            overflow: hidden;
-        }
-
-        body::before {
-            content: '';
-            position: fixed;
-            top: 0;
-            right: 0;
-            bottom: 0;
-            left: 0;
-            background: var(--bg-overlay);
-            z-index: -1;
-        }
-
-        .container {
-            background: var(--glass-bg);
-            border-radius: 15px;
-            padding: 40px;
-            box-shadow: var(--glass-box-shadow);
-            backdrop-filter: var(--glass-backdrop-filter);
-            border: 1px solid var(--glass-border);
-            text-align: center;
-            width: 95%; /* Adjusted for better responsiveness */
-            max-width: 1200px;
-            margin: 20px;
-            color: var(--text-color-white);
-        }
-
-        header {
-            padding-bottom: 20px;
-            margin-bottom: 30px;
-            border-bottom: 1px solid var(--header-border-color);
-        }
-
-        header h1 {
-            font-size: 2.5em;
-            font-weight: 300;
-            letter-spacing: 0.1em;
-            text-shadow: 2px 2px 3px rgba(0, 0, 0, 0.3);
-        }
-
-        main {
-            padding: 20px 0;
-        }
-
-        h2, h3 {
-            color: var(--text-color-white);
-            font-weight: 300;
-            margin-bottom: 20px;
-            text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.5);
-        }
-
-        p {
-            font-size: 1.1em;
-            margin-bottom: 15px;
-            color: var(--text-color-dimmed);
-            text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.5);
-        }
-
-        /* === Form Styles === */
-        .form {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            gap: 25px;
-            margin-bottom: 30px;
-        }
-
-        .form input, .form select, .form button {
-            padding: 15px 20px;
-            border-radius: 10px;
-            border: none;
-            background: var(--input-button-bg);
-            color: var(--text-color-white);
-            font-size: 1em;
-            width: 100%;
-            max-width: 400px;
-            backdrop-filter: blur(5px);
-            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
-            transition: all 0.3s ease;
-        }
-
-        .form input::placeholder, .form select {
-            color: var(--text-color-dimmed); /* Consistent dimmed color */
-        }
-
-        .form input:focus, .form select:focus {
-            outline: none;
-            border: 1px solid var(--input-button-focus-border);
-            background: var(--input-button-focus-bg);
-            box-shadow: 0 6px 8px rgba(0,0,0,0.2);
-        }
-
-        .form button {
-            background-color: var(--button-primary-bg);
-            color: var(--text-color-white);
-            cursor: pointer;
-            font-weight: bold;
-            text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.7);
-        }
-
-        .form button:hover:not(:disabled) {
-            background-color: var(--button-primary-hover-bg);
-            transform: translateY(-2px);
-            box-shadow: 0 6px 10px rgba(0,0,0,0.3);
-        }
-
-        .form button:disabled {
-            background-color: var(--button-disabled-bg);
-            cursor: not-allowed;
-            color: #ccc;
-        }
-
-        /* === Results Styles === */
-        .results {
-            margin-top: 30px;
-            padding: 30px;
-            background: var(--glass-bg);
-            border-radius: 12px;
-            box-shadow: inset 0 0 10px rgba(0, 0, 0, 0.2);
-            backdrop-filter: var(--glass-backdrop-filter);
-            border: 1px solid var(--glass-border);
-            animation: fadeIn 0.5s ease-out;
-            display: none;
-            text-align: left;
-        }
-
-        @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(20px); }
-            to { opacity: 1; transform: translateY(0); }
-        }
-
-        .results h2 {
-            font-size: 2em;
-            margin-bottom: 20px;
-            border-bottom: 1px dashed var(--header-border-color); /* Reused header border color */
-            padding-bottom: 10px;
-        }
-
-        .results h3 {
-            font-size: 1.6em;
-            margin-top: 25px;
-            margin-bottom: 15px;
-        }
-
-        .results p {
-            font-size: 1em;
-            margin-bottom: 10px;
-        }
-
-        /* === Table Styles === */
-        table {
-            width: 100%;
-            border-collapse: collapse;
-            margin: 20px 0; /* Simplified margin */
-            border-radius: 10px;
-            overflow: hidden;
-            box-shadow: 0 2px 5px rgba(0,0,0,0.3);
-            background: var(--table-bg);
-            backdrop-filter: var(--glass-backdrop-filter);
-        }
-
-        th, td {
-            padding: 12px 15px;
-            text-align: left;
-            border-bottom: 1px solid var(--glass-border); /* Reused glass border color */
-        }
-
-        th {
-            background-color: var(--table-header-bg);
-            color: var(--text-color-white);
-            font-weight: bold;
-            text-transform: uppercase;
-        }
-
-        tbody tr:nth-child(even) {
-            background-color: var(--table-row-even-bg);
-        }
-
-        /* === Image Container Styles === */
-        #imageContainer {
-            display: flex;
-            justify-content: center;
-            flex-wrap: wrap;
-            gap: 15px;
-            margin-top: 20px;
-        }
-
-        #imageContainer img {
-            max-width: 180px;
-            border-radius: 8px;
-            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
-            transition: transform 0.3s ease, box-shadow 0.3s ease;
-            cursor: pointer;
-            border: 1px solid var(--glass-border); /* Reused glass border */
-        }
-
-        #imageContainer img:hover {
-            transform: scale(1.05);
-            box-shadow: 0 6px 12px rgba(0, 0, 0, 0.4);
-        }
-
-        /* === Enlarged Image Overlay === */
-        .enlarged-image-overlay {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background-color: rgba(0, 0, 0, 0.9);
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            z-index: 1000;
-            opacity: 0;
-            pointer-events: none;
-            transition: opacity 0.3s ease;
-        }
-
-        .enlarged-image-overlay.show {
-            opacity: 1;
-            pointer-events: auto;
-        }
-
-        .enlarged-image-container {
-            position: relative;
-            max-width: 95%;
-            max-height: 95%;
-            transform: scale(0.95);
-            transition: transform 0.3s ease;
-        }
-
-        .enlarged-image-overlay.show .enlarged-image-container {
-            transform: scale(1);
-        }
-
-        .enlarged-image-container img {
-            max-width: 100%;
-            max-height: 90vh;
-            object-fit: contain;
-            border-radius: 10px;
-            box-shadow: 0 8px 16px rgba(0,0,0,0.6);
-        }
-
-        .close-button {
-            position: absolute;
-            top: 20px;
-            right: 20px;
-            background: transparent;
-            border: none;
-            color: var(--text-color-white); /* Reused text color */
-            font-size: 2em;
-            cursor: pointer;
-            opacity: 0.7;
-            transition: opacity 0.3s ease;
-        }
-
-        .close-button:hover {
-            opacity: 1;
-        }
-
-        /* === Error Message === */
-        .error-message {
-            background-color: var(--error-bg);
-            color: var(--error-text);
-            padding: 15px;
-            border-radius: 10px;
-            margin-top: 25px;
-            border: 1px solid var(--glass-border); /* Reused glass border */
-            backdrop-filter: var(--glass-backdrop-filter); /* Reused backdrop filter */
-            box-shadow: 0 4px 8px rgba(0,0,0,0.2);
-            animation: shake 0.82s cubic-bezier(.36,.07,.19,.97) both;
-        }
-
-        @keyframes shake {
-            10%, 90% { transform: translate3d(-1px, 0, 0); }
-            20%, 80% { transform: translate3d(2px, 0, 0); }
-            30%, 50%, 70% { transform: translate3d(-4px, 0, 0); }
-            40%, 60% { transform: translate3d(4px, 0, 0); }
-        }
-
-        /* === Footer Styles === */
-        footer {
-            text-align: center;
-            padding: 20px;
-            margin-top: 40px;
-            color: var(--text-color-dimmed); /* Reused dimmed text color */
-            font-size: 0.9em;
-            text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.5);
-        }
-
-        footer a {
-            color: var(--text-color-white); /* Reused white text color */
-            text-decoration: none;
-            opacity: 0.8;
-        }
-
-        footer a:hover {
-            text-decoration: underline;
-            opacity: 1;
-        }
-
-        /* === Export Button Styles === */
-        .export-button {
-            padding: 12px 25px;
-            background-color: var(--export-button-bg);
-            color: var(--text-color-white); /* Reused white text color */
-            border: none;
-            border-radius: 8px;
-            cursor: pointer;
-            font-size: 0.9em;
-            transition: background-color 0.3s ease, transform 0.2s ease;
-            margin-top: 25px;
-            box-shadow: 0 3px 6px rgba(0,0,0,0.2);
-            backdrop-filter: var(--glass-backdrop-filter); /* Reused backdrop filter */
-        }
-
-        .export-button:hover {
-            background-color: var(--export-button-hover-bg);
-            transform: translateY(-1px);
-            box-shadow: 0 4px 8px rgba(0,0,0,0.3);
-        }
-
-        /* === Responsive Design === */
-        @media (max-width: 768px) {
-            .container {
-                width: 95%;
-                padding: 30px;
-                margin: 15px;
-            }
-
-            header h1 {
-                font-size: 2em;
-            }
-
-            .form {
-                gap: 20px;
-            }
-
-            .form input, .form select, .form button {
-                max-width: 100%;
-                padding: 12px 15px;
-                font-size: 0.9em;
-            }
-
-            .results {
-                padding: 20px;
-            }
-
-            .results h2 {
-                font-size: 1.8em;
-            }
-
-            .results h3 {
-                font-size: 1.4em;
-            }
-
-            p {
-                font-size: 1em;
-            }
-
-            table {
-                font-size: 0.9em;
-            }
-
-            th, td {
-                padding: 10px;
-            }
-
-            #imageContainer img {
-                max-width: 140px;
-            }
-
-            .export-button {
-                font-size: 0.8em;
-                padding: 10px 20px;
-            }
-        }
-    </style>
-</head>
-<body>
-<div class="container">
-    <header>
-        <h1>成绩查询系统</h1>
-    </header>
-
-    <main>
-        <div class="form">
-            <input type="text" id="name" placeholder="请输入学生姓名">
-            <button id="submitBtn">查询全部成绩</button>
-        </div>
-
-        <div class="results" id="results">
-            <h2>查询结果</h2>
-            <p id="studentName"></p>
-            <p id="studentSchool"></p>
-            <p id="studentClass"></p>
-            <p id="totalScore"></p>
-
-            <h3>答题卡</h3>
-            <div id="imageContainer"></div>
-            <button id="exportImages" class="export-button">导出答题卡</button>
-
-            <h3>成绩详情</h3>
-            <div id="scoreDetails"></div>
-            <button id="exportExcel" class="export-button">导出详细成绩</button>
-        </div>
-    </main>
-
-    <footer>
-        &copy; 定边七中 - 界面设计灵感来自 <a href="https://openai.com" target="_blank">OpenAI</a>
-    </footer>
-
-</div>
-
-<script>
-    const nameInput = document.getElementById("name");
-    const submitBtn = document.getElementById("submitBtn");
-    const resultsSection = document.getElementById("results");
-    const studentName = document.getElementById("studentName");
-    const studentSchool = document.getElementById("studentSchool");
-    const studentClass = document.getElementById("studentClass");
-    const totalScore = document.getElementById("totalScore");
-    const scoreDetails = document.getElementById("scoreDetails");
-    const imageContainer = document.getElementById("imageContainer");
-    const exportImagesBtn = document.getElementById("exportImages");
-    const exportExcelBtn = document.getElementById("exportExcel");
-
-    const subjectCodes = {
-        '英语': 'SUBJ01de4b004f054e76a1295ef0d83bccbb',
-        '数学': 'SUBJ25df9928c00b4171b1f617635b033106',
-        '语文': 'SUBJae5b7cb9071045219af1b71b74c7a2f7',
-        '物理': 'SUBJ7f007a1596b2440c8d1202af182533ca',
-        '历史': 'SUBJb6894c3db41c4cf785355dc6cb8e19fe',
-        '化学': 'SUBJ4cbb9650a3ea41da894cefc41ce88d63',
-        '道法': 'SUBJ4ab2cb65d5604ea78debe70f13eabf9e'
-    };
-
-    submitBtn.addEventListener("click", fetchAllSubjectResults);
-
-    async function fetchAllSubjectResults() { // Make fetchAllSubjectResults async
-        const name = nameInput.value.trim();
-
-        if (!name) {
-            alert("请输入学生姓名！");
-            return;
-        }
-
-        resultsSection.style.display = "none";
-        imageContainer.innerHTML = "";
-        scoreDetails.innerHTML = "";
-
-        const results = await Promise.all(Object.values(subjectCodes).map(async subjectId => { // Use async map
-            const apiUrl = `https://hx-api.tyhuixue.com/exam-service/subjectScoreModify/query?examId=EXAM95820a888ac6462da6d8fd21f0f64070&subjectId=${subjectId}&name=${encodeURIComponent(name)}`;
-            try {
-                const response = await fetch(apiUrl, { credentials: 'omit' }); // 添加 credentials: 'omit'
-                const data = await response.json(); // Await response.json()
-                return (data.retCode === "000000" && data.result.length > 0) ? data.result[0] : null;
-            } catch (error) {
-                console.error("Error fetching data:", error);
-                return null;
-            }
-        }));
-
-        const validResults = results.filter(result => result != null);
-        console.log("fetchAllSubjectResults - validResults after filter:", validResults); // DEBUG LOG: Log validResults
-        if (validResults.length > 0) {
-            displayMultiSubjectResults(validResults);
-        } else {
-            alert("未找到相关数据！请检查姓名是否正确。");
-            resultsSection.style.display = "none";
-        }
-        return results; // Return results for logging purposes
+ <html lang="zh-CN">
+ <head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>定边七中｜答题卡查询</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.7.1/jszip.min.js"></script>
+  <style>
+  /* 全局样式 */
+  * {
+   margin: 0;
+   padding: 0;
+   box-sizing: border-box;
+  }
+
+  body {
+   font-family: Arial, sans-serif;
+   background-color: #f0f0f0;
+   color: #333333;
+   line-height: 1.6;
+   font-size: 14px; /* 调整默认字体大小 */
+  }
+
+  /* 时间显示 */
+  #timeDisplay {
+   position: absolute;
+   top: 10px;
+   left: 10px;
+   font-size: 14px;
+   color: #666;
+  }
+
+  /* 容器 */
+  .container {
+   max-width: 1200px; /* 加宽容器 */
+   margin: 30px auto; /* 缩小上下 margin */
+   padding: 20px;
+   background-color: #ffffff;
+   border-radius: 15px; /* 稍微调整圆角 */
+   box-shadow: 0 6px 15px rgba(0, 0, 0, 0.08); /* 减弱阴影 */
+   display: flex; /* 启用 Flexbox 布局 */
+   flex-direction: column; /* 垂直布局，先header，再main */
+  }
+
+  /* 顶部导航 */
+  header {
+   padding: 15px;
+   border-bottom: 1px solid rgba(0, 0, 0, 0.05); /* 减弱border */
+   text-align: left; /*  logo 靠左 */
+  }
+
+  header .logo {
+   font-size: 28px; /* 缩小logo字体 */
+   font-weight: bold;
+   color: #333333;
+  }
+
+  /* 主要内容 */
+  main {
+   display: flex; /* main区域 Flexbox 布局，用于左右分栏 */
+   padding: 20px 0;
+  }
+
+  /* 左侧 - 成绩详情 */
+  .score-details-container {
+   flex: 1; /* 占据左侧空间 */
+   padding-right: 20px;
+   text-align: left; /* 内容靠左 */
+  }
+
+  /* 右侧 - 答题卡图片 */
+  .answer-sheet-container {
+   flex: 1; /* 占据右侧空间 */
+   text-align: center;
+  }
+
+  h1 {
+   font-size: 24px; /* 缩小标题字体 */
+   margin-bottom: 15px;
+   color: #000000;
+   text-align: left; /* 标题靠左 */
+   padding-left: 20px; /* 增加左侧内边距，对齐表单 */
+  }
+
+  h2 {
+   font-size: 20px; /* 缩小二级标题字体 */
+   margin-top: 15px;
+   margin-bottom: 10px;
+   color: #000000;
+  }
+
+  h3 {
+   font-size: 18px; /* 缩小三级标题字体 */
+   margin-top: 15px;
+   margin-bottom: 10px;
+   color: #000000;
+  }
+
+  p {
+   font-size: 14px; /* 缩小段落字体 */
+   color: #000000;
+   margin-bottom: 15px;
+  }
+
+  /* 查询表单 */
+  .form {
+   display: flex;
+   flex-direction: column;
+   align-items: flex-start; /* 表单项左对齐 */
+   gap: 15px; /* 缩小表单项间距 */
+   padding: 0 20px; /* 左右padding对齐标题 */
+   margin-bottom: 20px; /* 增加表单底部外边距 */
+  }
+
+  .form label {
+   display: block; /* 标签独占一行 */
+   margin-bottom: 5px; /* 标签下边距 */
+   color: #666; /* 标签文字颜色 */
+   font-size: 14px;
+  }
+
+  .form input,
+  .form select {
+   width: 100%;
+   max-width: 300px; /* 限制表单项最大宽度 */
+   padding: 10px; /* 缩小内边距 */
+   font-size: 14px;
+   border: 1px solid rgba(0, 0, 0, 0.15); /* 减弱边框 */
+   background-color: #ffffff;
+   color: #333333;
+   border-radius: 8px; /* 稍微调整圆角 */
+   transition: all 0.3s ease;
+  }
+
+  .form input:focus,
+  .form select:focus {
+   border-color: #000000;
+   box-shadow: 0 0 0 1.5px rgba(0, 0, 0, 0.08); /* 减弱 focus 阴影 */
+   outline: none;
+  }
+
+  .form button {
+   width: auto; /* 按钮宽度自适应内容 */
+   padding: 8px 20px; /* 调整按钮内边距 */
+   font-size: 14px;
+   background-color: #000000;
+   color: #ffffff;
+   border: none;
+   border-radius: 8px;
+   cursor: pointer;
+   transition: all 0.3s ease;
+  }
+
+  .form button:hover:not(:disabled) {
+   background-color: #333333;
+  }
+
+  .form button:disabled {
+   background-color: #cccccc;
+   cursor: not-allowed;
+  }
+
+  /* 结果展示 */
+  .results {
+   margin-top: 20px;
+   padding: 15px;
+   background-color: #f9f9f9;
+   border-radius: 12px; /* 稍微调整圆角 */
+   box-shadow: 0 3px 8px rgba(0, 0, 0, 0.05); /* 减弱阴影 */
+   animation: fadeIn 0.5s ease-out;
+   display: flex; /* Results 区域 Flexbox 布局 */
+  }
+
+  /* 考生信息 */
+  .student-info {
+   display: flex; /* 考生信息 Flexbox 布局，两部分 */
+   justify-content: space-around; /* 两部分左右分布 */
+   margin-bottom: 15px;
+  }
+
+  .student-info p {
+   margin-bottom: 8px; /* 考生信息段落间距 */
+  }
+
+  footer {
+  text-align: center;
+  padding: 15px;
+  background-color: #ffffff; /* 白色背景 */
+  color: #000000; /* 黑色文字 */
+  font-size: 12px; /* 缩小底部字体 */
+  margin-top: 20px;
+ }
+
+ footer a {
+  color: #000000; /* 黑色链接 */
+ }
+
+ footer a:hover {
+  text-decoration: underline;
+ }
+
+  @keyframes fadeIn {
+   from {
+    opacity: 0;
+    transform: translateY(10px); /* 减小位移 */
+   }
+   to {
+    opacity: 1;
+    transform: translateY(0);
+   }
+  }
+
+  .results h2 {
+   font-size: 22px; /* 缩小 results 二级标题 */
+   color: #000000;
+   margin-bottom: 15px;
+  }
+
+  .results h3 {
+   font-size: 18px; /* 缩小 results 三级标题 */
+   color: #000000;
+   margin-bottom: 10px;
+  }
+
+  .results p {
+   font-size: 14px; /* 缩小 results 段落字体 */
+   color: #000000;
+   margin-bottom: 8px; /* 缩小 results 段落间距 */
+  }
+
+  /* 成绩表格 */
+  table {
+   width: 100%;
+   border-collapse: collapse;
+   margin-top: 15px;
+   margin-bottom: 15px;
+   font-size: 12px; /* 缩小表格字体 */
+  }
+
+  th, td {
+   padding: 8px; /* 缩小表格单元格内边距 */
+   text-align: left;
+   border-bottom: 1px solid #eee; /* 减弱表格分隔线 */
+  }
+
+  th {
+   background-color: #f2f2f2;
+   font-weight: bold;
+  }
+
+  tr:hover {
+   background-color: #f5f5f5;
+  }
+
+  /* 试卷图片展示 */
+  #imageContainer {
+   display: flex;
+   justify-content: flex-start; /* 图片左对齐 */
+   flex-wrap: wrap;
+   gap: 10px; /* 缩小图片间距 */
+   margin-top: 10px;
+  }
+
+  #imageContainer img {
+   max-width: 180px; /* 限制图片最大宽度 */
+   border-radius: 6px; /* 稍微调整圆角 */
+   box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08); /* 减弱阴影 */
+   transition: transform 0.3s ease, box-shadow 0.3s ease;
+   cursor: pointer;
+  }
+
+  #imageContainer img:hover {
+   transform: scale(1.03); /* 缩小 hover 放大比例 */
+   box-shadow: 0 3px 8px rgba(0, 0, 0, 0.1); /* 减弱 hover 阴影 */
+  }
+
+  /* 放大图片样式 */
+  .enlarged-image-overlay {
+   position: fixed;
+   top: 0;
+   left: 0;
+   width: 100%;
+   height: 100%;
+   background-color: rgba(0, 0, 0, 0.7); /* 稍微调整背景透明度 */
+   display: flex;
+   justify-content: center;
+   align-items: center;
+   z-index: 1000;
+   opacity: 0;
+   transition: opacity 0.3s ease;
+  }
+
+  .enlarged-image-container {
+   position: relative;
+   max-width: 95%; /* 放大图片容器宽度 */
+   max-height: 95%; /* 放大图片容器高度 */
+   transform: scale(0.95); /* 稍微调整初始缩放 */
+   transition: transform 0.3s ease;
+  }
+
+  .enlarged-image-container img {
+   max-width: 100%;
+   max-height: 95vh; /* 放大图片最大高度 */
+   object-fit: contain;
+   border-radius: 8px;
+  }
+
+  .close-button {
+   position: absolute;
+   top: -30px; /* 调整关闭按钮位置 */
+   right: -30px;
+   background-color: transparent;
+   border: none;
+   color: white;
+   font-size: 30px; /* 缩小关闭按钮字体 */
+   cursor: pointer;
+   padding: 6px; /* 缩小关闭按钮内边距 */
+  }
+
+  /* 错误消息 */
+  .error-message {
+   background-color: #ffebee;
+   color: #c62828;
+   padding: 8px; /* 缩小错误消息内边距 */
+   border-radius: 6px; /* 稍微调整圆角 */
+   margin-top: 15px;
+   animation: shake 0.82s cubic-bezier(.36,.07,.19,.97) both;
+   font-size: 14px; /* 缩小错误消息字体 */
+  }
+
+  @keyframes shake {
+   10%, 90% {
+    transform: translate3d(-0.5px, 0, 0); /* 减小shake幅度 */
+   }
+   20%, 80% {
+    transform: translate3d(1px, 0, 0);
+   }
+   30%, 50%, 70% {
+    transform: translate3d(-2px, 0, 0);
+   }
+   40%, 60% {
+    transform: translate3d(2px, 0, 0);
+   }
+  }
+
+  /* 底部版权 */
+  footer {
+   text-align: center;
+   padding: 15px;
+   color: #333333;
+   font-size: 12px;
+   margin-top: 20px;
+  }
+
+  footer a {
+   color: #333333;
+   text-decoration: none;
+  }
+
+  footer a:hover {
+   text-decoration: underline;
+  }
+
+  /* 导出按钮样式 */
+  .export-button {
+   padding: 8px 15px; /* 缩小导出按钮内边距 */
+   background-color: #000000;
+   color: white;
+   border: none;
+   border-radius: 6px; /* 稍微调整圆角 */
+   cursor: pointer;
+   font-size: 12px; /* 缩小导出按钮字体 */
+   transition: background-color 0.3s ease;
+   margin-top: 15px;
+  }
+
+  .export-button:hover {
+   background-color: #333333;
+  }
+
+  /* 响应式设计 */
+  @media (max-width: 768px) {
+   .container {
+    width: 98%; /* 移动端容器更宽 */
+    padding: 15px;
+    margin: 15px auto; /* 移动端上下 margin 更小 */
+   }
+
+   header {
+    text-align: center; /* 移动端 header logo 居中 */
+   }
+
+   main {
+    flex-direction: column; /* 移动端 main 区域垂直布局 */
+   }
+
+   .score-details-container,
+   .answer-sheet-container {
+    flex: none; /* 取消 flex 占据比例 */
+    width: 100%; /* 宽度 100% */
+    padding-right: 0; /* 清除右侧 padding */
+   }
+
+   .answer-sheet-container {
+    margin-top: 20px; /* 移动端答题卡容器上外边距 */
+   }
+
+   h1 {
+    font-size: 22px; /* 移动端标题字体 */
+    text-align: center; /* 移动端标题居中 */
+    padding-left: 0; /* 清除左侧 padding */
+   }
+
+   h2 {
+    font-size: 18px; /* 移动端二级标题字体 */
+   }
+
+   h3 {
+    font-size: 16px; /* 移动端三级标题字体 */
+   }
+
+   p {
+    font-size: 14px; /* 移动端段落字体 */
+    text-align: center; /* 移动端段落居中 */
+   }
+
+   .form {
+    align-items: center; /* 移动端表单项居中对齐 */
+    padding: 0; /* 清除表单左右 padding */
+   }
+
+   .form label {
+    text-align: left; /* 移动端表单标签左对齐 */
+   }
+
+   .form input,
+   .form select,
+   .form button {
+    max-width: 100%; /* 移动端表单项宽度 100% */
+   }
+
+   .student-info {
+    flex-direction: column; /* 移动端考生信息垂直布局 */
+    align-items: center; /* 移动端考生信息居中对齐 */
+   }
+
+   table {
+    font-size: 12px; /* 移动端表格字体 */
+   }
+
+   #imageContainer img {
+    max-width: 100%; /* 移动端图片宽度 100% */
+   }
+
+   .enlarged-image-container {
+    max-width: 100%; /* 移动端放大图片容器宽度 */
+   }
+
+   .close-button {
+    top: -20px; /* 移动端关闭按钮位置 */
+    right: -20px;
+    font-size: 20px; /* 移动端关闭按钮字体 */
+   }
+  }
+  </style>
+ </head>
+ <body>
+  <div id="timeDisplay"></div>
+  <div class="container">
+   <header>
+    <h1 class="logo">成绩查询</h1>
+   </header>
+
+   <main>
+    <div class="form">
+     <label for="name">姓名</label>
+     <input type="text" id="name" placeholder="请输入姓名...">
+     <label for="subject">科目</label>
+     <select id="subject">
+      <option value="SUBJ01de4b004f054e76a1295ef0d83bccbb">英语</option>
+      <option value="SUBJ25df9928c00b4171b1f617635b033106">数学</option>
+      <option value="SUBJae5b7cb9071045219af1b71b74c7a2f7">语文</option>
+      <option value="SUBJ7f007a1596b2440c8d1202af182533ca">物理</option>
+      <option value="SUBJb6894c3db41c4cf785355dc6cb8e19fe">历史</option>
+      <option value="SUBJ4cbb9650a3ea41da894cefc41ce88d63">化学</option>
+      <option value="SUBJ4ab2cb65d5604ea78debe70f13eabf9e">道法</option>
+     </select>
+     <button id="submitBtn">查询成绩</button>
+    </div>
+
+    <div class="results" id="results" style="display: none;">
+     <div class="student-info">
+      <div class="info-left">
+       <p id="studentName"></p>
+       <p id="studentSchool"></p>
+      </div>
+      <div class="info-right">
+       <p id="studentClass"></p>
+       <p id="totalScore"></p>
+      </div>
+     </div>
+
+     <div class="score-details-container">
+      <h3>答题详情</h3>
+      <div id="scoreDetails"></div>
+      <button id="exportExcel" class="export-button">导出详细</button>
+     </div>
+
+     <div class="answer-sheet-container">
+      <h3>答题卡</h3>
+      <div id="imageContainer"></div>
+      <button id="exportImages" class="export-button">导出答题卡</button>
+     </div>
+    </div>
+   </main>
+   <footer>
+    &copy; 定边七中 - 由 <a href="https://openai.com" target="_blank">OpenAI</a> 提供灵感
+   </footer>
+
+  </div>
+
+
+  <script>
+   function updateTime() {
+    const now = new Date();
+    const timeString = now.toLocaleTimeString('zh-CN', { hour12: false });
+    document.getElementById('timeDisplay').textContent = timeString;
+   }
+
+   updateTime();
+   setInterval(updateTime, 1000); // 每秒更新时间
+
+
+   const nameInput = document.getElementById("name");
+   const subjectSelect = document.getElementById("subject");
+   const submitBtn = document.getElementById("submitBtn");
+   const resultsSection = document.getElementById("results");
+   const studentName = document.getElementById("studentName");
+   const studentSchool = document.getElementById("studentSchool");
+   const studentClass = document.getElementById("studentClass");
+   const totalScore = document.getElementById("totalScore");
+   const scoreDetails = document.getElementById("scoreDetails");
+   const imageContainer = document.getElementById("imageContainer");
+   const exportImagesBtn = document.getElementById("exportImages");
+   const exportExcelBtn = document.getElementById("exportExcel");
+
+   // 查询成绩
+   submitBtn.addEventListener("click", () => {
+    const name = nameInput.value;
+    const subject = subjectSelect.value;
+
+    if (!name || !subject) {
+     alert("请输入完整信息！");
+     return;
     }
 
+    const apiUrl = `https://hx-api.tyhuixue.com/exam-service/subjectScoreModify/query?examId=EXAM95820a888ac6462da6d8fd21f0f64070&subjectId=<span class="math-inline">\{subject\}&name\=</span>{encodeURIComponent(name)}`;
 
-    function displayMultiSubjectResults(subjectResults) {
-        const examinee = subjectResults[0].examinee;
+    fetch(apiUrl)
+     .then(response => response.json())
+     .then(data => {
+      if (data.retCode === "000000" && data.result.length > 0) {
+       displayResults(data.result[0]);
+      } else {
+       alert("未找到相关数据！");
+      }
+     })
+     .catch(error => {
+      console.error("Error fetching data:", error);
+      alert("查询失败，请稍后重试");
+     });
+   });
 
-        studentName.textContent = `姓名: ${examinee.name || "暂无"}`;
-        studentSchool.textContent = `学校: ${examinee.schoolName || "暂无"}`;
-        studentClass.textContent = `班级: ${examinee.clazzName || "暂无"}`;
+   // 显示查询结果
+   function displayResults(result) {
+    const examinee = result.examinee;
+    const subjectScore = result.subjectScore;
 
-        let totalAvgScore = 0;
-        let validSubjectCount = 0;
+    studentName.textContent = `姓名: ${examinee.name || "暂无"}`;
+    studentSchool.textContent = `学校: ${examinee.schoolName || "暂无"}`;
+    studentClass.textContent = `班级: ${examinee.clazzName || "暂无"}`;
+    totalScore.textContent = `总分: ${subjectScore.totalScore || "暂无"}`;
 
-        subjectResults.forEach(result => {
-            if (result && result.subjectScore) {
-                totalAvgScore += parseFloat(result.subjectScore.totalScore || 0);
-                validSubjectCount++;
-            }
-        });
-
-        totalScore.textContent = `平均分: ${(validSubjectCount > 0 ? (totalAvgScore / validSubjectCount).toFixed(2) : "暂无")}`;
-
-        imageContainer.innerHTML = "";
-        scoreDetails.innerHTML = "";
-
-        console.log("displayMultiSubjectResults - subjectResults:", subjectResults); // DEBUG LOG: Log the entire array
-
-        subjectResults.forEach(result => {
-            console.log("displayMultiSubjectResults - current result:", result); // DEBUG LOG: Log each 'result' object
-
-            if (result) {
-                // Error occurs here:
-                const subjectName = Object.keys(subjectCodes).find(key => subjectCodes[key] === result.subject.subjectId) || result.subject.subjectName || '未知科目';
-
-                if (result.subjectScore.imgUrlList && result.subjectScore.imgUrlList.length > 0) {
-                    const subjectImageHeader = document.createElement('h3');
-                    subjectImageHeader.textContent = `${subjectName} 答题卡`;
-                    imageContainer.appendChild(subjectImageHeader);
-
-                    result.subjectScore.imgUrlList.forEach(img => {
-                        const imgElement = document.createElement("img");
-                        imgElement.src = img.imgUrl;
-                        imgElement.alt = `${subjectName} 答题卡`;
-                        imgElement.addEventListener("click", () => enlargeImage(img.imgUrl));
-                        imageContainer.appendChild(imgElement);
-                    });
-                }
-
-                const subjectScoreHeader = document.createElement('h3');
-                subjectScoreHeader.textContent = `${subjectName} 成绩详情`;
-                scoreDetails.appendChild(subjectScoreHeader);
-
-                const kgScoreJson = result.subjectScore.kgScoreJson ? JSON.parse(result.subjectScore.kgScoreJson) : null;
-                if (kgScoreJson && kgScoreJson.items) {
-                    scoreDetails.appendChild(createScoreTable(`${subjectName} - 选择题`, kgScoreJson.items));
-                }
-
-                const zgScoreJson = result.subjectScore.zgScoreJson ? JSON.parse(subjectScore.zgScoreJson) : null;
-                if (zgScoreJson && zgScoreJson.items) {
-                    scoreDetails.appendChild(createScoreTable(`${subjectName} - 主观题`, zgScoreJson.items));
-                }
-            }
-        });
-
-        resultsSection.style.display = "block";
-    }
+    // 清空图片容器和成绩详情容器
+    imageContainer.innerHTML = "";
+    scoreDetails.innerHTML ="";
 
 
-    function createScoreTable(title, items) {
-        const table = document.createElement("table");
-        const thead = document.createElement("thead");
-        const tbody = document.createElement("tbody");
-
-        const titleRow = document.createElement("tr");
-        const titleCell = document.createElement("th");
-        titleCell.colSpan = 3;
-        titleCell.textContent = title;
-        titleRow.appendChild(titleCell);
-        thead.appendChild(titleRow);
-
-        const headerRow = document.createElement("tr");
-        ["序号", "题目", "得分"].forEach(text => {
-            const th = document.createElement("th");
-            th.textContent = text;
-            headerRow.appendChild(th);
-        });
-        thead.appendChild(headerRow);
-
-        items.forEach((item, index) => {
-            const row = document.createElement("tr");
-            const indexCell = document.createElement("td");
-            const itemCell = document.createElement("td");
-            const scoreCell = document.createElement("td");
-
-            indexCell.textContent = index + 1;
-            itemCell.textContent = item.title || item.item;
-            scoreCell.textContent = item.score;
-
-            row.append(indexCell, itemCell, scoreCell);
-            tbody.appendChild(row);
-        });
-
-        table.append(thead, tbody);
-        return table;
-    }
-
-
-    function enlargeImage(src) {
-        const overlay = document.createElement("div");
-        overlay.className = "enlarged-image-overlay";
-
-        const container = document.createElement("div");
-        container.className = "enlarged-image-container";
-
-        const img = document.createElement("img");
-        img.src = src;
-
-        const closeBtn = document.createElement("button");
-        closeBtn.className = "close-button";
-        closeBtn.innerHTML = "&times;";
-        closeBtn.addEventListener("click", () => {
-            overlay.classList.remove('show');
-            container.style.transform = "scale(0.95)";
-            setTimeout(() => overlay.remove(), 300);
-        });
-
-        container.append(img, closeBtn);
-        overlay.appendChild(container);
-        document.body.appendChild(overlay);
-        overlay.classList.add('show');
-    }
-
-
-    exportImagesBtn.addEventListener("click", () => {
-        const images = Array.from(imageContainer.querySelectorAll("img"));
-        if (!images.length) {
-            alert("没有可导出的答题卡图片");
-            return;
-        }
-
-        const zip = new JSZip();
-        Promise.all(images.map((img, index) =>
-            fetch(img.src)
-                .then(res => res.blob())
-                .then(blob => zip.file(`答题卡_${index + 1}.jpg`, blob))
-        )).then(() =>
-            zip.generateAsync({ type: "blob" }).then(content => {
-                const a = document.createElement("a");
-                a.href = URL.createObjectURL(content);
-                a.download = "答题卡.zip";
-                a.click();
-            })
-        );
+    // 显示试卷图片
+    subjectScore.imgUrlList.forEach(img => {
+     const imgElement = document.createElement("img");
+     imgElement.src = img.imgUrl;
+     imgElement.addEventListener("click", () => enlargeImage(img.imgUrl));
+     imageContainer.appendChild(imgElement);
     });
 
+    // 显示成绩详情
 
-    exportExcelBtn.addEventListener("click", () => {
-        const tables = scoreDetails.querySelectorAll("table");
-        if (!tables.length) {
-            alert("没有可导出的成绩数据");
-            return;
-        }
+    // 显示选择题成绩
+    const kgScoreJson = JSON.parse(subjectScore.kgScoreJson);
+    if (kgScoreJson && kgScoreJson.items) {
+     const choiceScoreTable = createScoreTable("选择题", kgScoreJson.items);
+     scoreDetails.appendChild(choiceScoreTable);
+    }
 
-        const wb = XLSX.utils.book_new();
+    // 显示主观题成绩
+    const zgScoreJson = JSON.parse(subjectScore.zgScoreJson);
+    if (zgScoreJson && zgScoreJson.items) {
+     const subjectiveScoreTable = createScoreTable("主观题", zgScoreJson.items);
+     scoreDetails.appendChild(subjectiveScoreTable);
+    }
 
-        tables.forEach((table) => {
-            const ws = XLSX.utils.table_to_sheet(table);
-            const subjectName = table.querySelector('th[colspan="3"]').textContent.split(' - ')[0];
-            const tableType = table.querySelector('th[colspan="3"]').textContent.split(' - ')[1];
-            const sheetName = `${subjectName}_${tableType}`;
+    resultsSection.style.display = "flex"; /* 修改为 Flex 布局显示 */
+   }
 
-            XLSX.utils.book_append_sheet(wb, ws, sheetName);
-        });
+   // 创建成绩表格
+   function createScoreTable(title, items) {
+    const table = document.createElement("table");
+    const thead = document.createElement("thead");
+    const tbody = document.createElement("tbody");
 
-        XLSX.writeFile(wb, "成绩详情.xlsx");
+    // 添加表格标题
+    const titleRow = document.createElement("tr");
+    const titleCell = document.createElement("th");
+    titleCell.colSpan = 3;
+    titleCell.textContent = title;
+    titleRow.appendChild(titleCell);
+    thead.appendChild(titleRow);
+
+    // 添加表头
+    const headerRow = document.createElement("tr");
+    ["序号", "题目", "得分"].forEach(text => {
+     const th = document.createElement("th");
+     th.textContent = text;
+     headerRow.appendChild(th);
     });
-</script>
-</body>
-</html>
+    thead.appendChild(headerRow);
+
+    // 添加表格内容
+    items.forEach((item, index) => {
+     const row = document.createElement("tr");
+     const indexCell = document.createElement("td");
+     const itemCell = document.createElement("td");
+     const scoreCell = document.createElement("td");
+
+     indexCell.textContent = index + 1;
+     itemCell.textContent = item.title || item.item;
+     scoreCell.textContent = item.score;
+
+     row.appendChild(indexCell);
+     row.appendChild(itemCell);
+     row.appendChild(scoreCell);
+     tbody.appendChild(row);
+    });
+
+    table.appendChild(thead);
+    table.appendChild(tbody);
+    return table;
+   }
+
+   // 放大图片
+   function enlargeImage(src) {
+    const overlay = document.createElement("div");
+    overlay.className = "enlarged-image-overlay";
+
+    const container = document.createElement("div");
+    container.className = "enlarged-image-container";
+
+    const img = document.createElement("img");
+    img.src = src;
+
+    const closeBtn = document.createElement("button");
+    closeBtn.className = "close-button";
+    closeBtn.innerHTML = "&times;";
+    closeBtn.addEventListener("click", () => {
+     overlay.style.opacity = "0";
+     setTimeout(() => overlay.remove(), 300);
+    });
+
+    container.appendChild(img);
+    container.appendChild(closeBtn);
+    overlay.appendChild(container);
+    document.body.appendChild(overlay);
+
+    setTimeout(() => {
+     overlay.style.opacity = "1";
+     container.style.transform = "scale(1)";
+    }, 50);
+   }
+
+   // 导出答题卡
+   exportImagesBtn.addEventListener("click", () => {
+    const images = Array.from(imageContainer.querySelectorAll("img"));
+    if (images.length === 0) {
+     alert("没有可导出的答题卡图片");
+     return;
+    }
+
+    const zip = new JSZip();
+    const promises = images.map((img, index) =>
+     fetch(img.src)
+      .then(res => res.blob())
+      .then(blob => zip.file(`答题卡_${index + 1}.jpg`, blob))
+    );
+
+    Promise.all(promises).then(() => {
+     zip.generateAsync({ type: "blob" }).then(content => {
+      const a = document.createElement("a");
+      a.href = URL.createObjectURL(content);
+      a.download = "答题卡.zip";
+      a.click();
+     });
+    });
+   });
+
+   // 导出成绩
+   exportExcelBtn.addEventListener("click", () => {
+    const tables = scoreDetails.querySelectorAll("table");
+    if (tables.length === 0) {
+     alert("没有可导出的成绩数据");
+     return;
+    }
+
+    const wb = XLSX.utils.book_new();
+
+    tables.forEach((table, index) => {
+     const ws = XLSX.utils.table_to_sheet(table);
+     XLSX.utils.book_append_sheet(wb, ws, `成绩详情_${index + 1}`);
+    });
+
+    XLSX.writeFile(wb, "成绩详情.xlsx");
+   });
+  </script>
+ </body>
+ </html>
