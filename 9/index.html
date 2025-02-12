@@ -2,11 +2,12 @@
 <html lang="zh-CN">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale: 1.0">
     <title>定边七中｜答题卡查询</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.7.1/jszip.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
     * {
         margin: 0;
@@ -16,7 +17,7 @@
 
     body {
         font-family: Arial, sans-serif;
-        background-image: url('https://example.com/your-background-image.jpg');
+        background-image: url('https://pic1.imgdb.cn/item/67a8be16d0e0a243d4fd9740.jpg'); /*  替换为您的背景图片 URL */
         background-size: cover;
         background-attachment: fixed;
         color: #333333;
@@ -104,6 +105,8 @@
     .results {
         display: flex;
         gap: 40px;
+        display: none; /* 初始隐藏 results 区域 */
+        flex-direction: column; /*  修改为 column 布局，条状图在最上方 */
     }
 
     .results-left {
@@ -113,6 +116,17 @@
     .results-right {
         flex: 1;
     }
+
+    .subject-result {
+        margin-bottom: 40px; /* 科目结果之间的间距 */
+        border-bottom: 1px solid rgba(0, 0, 0, 0.1);
+        padding-bottom: 20px;
+    }
+
+    .subject-result:last-child {
+        border-bottom: none; /* 最后一个科目结果不显示底边 */
+    }
+
 
     table {
         width: 100%;
@@ -133,13 +147,13 @@
         font-weight: bold;
     }
 
-    #imageContainer {
+    .image-container {
         display: flex;
         flex-direction: column;
         gap: 20px;
     }
 
-    #imageContainer img {
+    .imageContainer img {
         width: 100%;
         max-width: 300px;
         border-radius: 8px;
@@ -148,7 +162,7 @@
         cursor: pointer;
     }
 
-    #imageContainer img:hover {
+    .imageContainer img:hover {
         transform: scale(1.05);
         box-shadow: 0 6px 12px rgba(0, 0, 0, 0.2);
     }
@@ -220,6 +234,22 @@
             flex: 1;
         }
     }
+    #scoreChart {
+        width: 100%;
+        max-width: 800px; /* 调整图表最大宽度 */
+        margin: 20px auto;
+    }
+    .view-paper-link {
+        color: #007bff; /* 链接颜色 */
+        text-decoration: none;
+        cursor: pointer;
+        margin-left: 10px; /*  与科目名称保持一定间距 */
+        font-size: 0.9em; /*  稍微缩小链接字体 */
+    }
+
+    .view-paper-link:hover {
+        text-decoration: underline; /* 鼠标悬停下划线 */
+    }
     </style>
 </head>
 <body>
@@ -232,40 +262,18 @@
         <main>
             <div class="form">
                 <input type="text" id="name" placeholder="请输入姓名...">
-                <select id="subject">
-                    <option value="SUBJ01de4b004f054e76a1295ef0d83bccbb">英语</option>
-                    <option value="SUBJ25df9928c00b4171b1f617635b033106">数学</option>
-                    <option value="SUBJae5b7cb9071045219af1b71b74c7a2f7">语文</option>
-                    <option value="SUBJ7f007a1596b2440c8d1202af182533ca">物理</option>
-                    <option value="SUBJb6894c3db41c4cf785355dc6cb8e19fe">历史</option>
-                    <option value="SUBJ4cbb9650a3ea41da894cefc41ce88d63">化学</option>
-                    <option value="SUBJ4ab2cb65d5604ea78debe70f13eabf9e">道法</option>
-                </select>
-                <div class="cf-turnstile" data-sitekey="0x4AAAAAAA1Lgw51wUi0_hHk"></div>
-                <button id="submitBtn" disabled>查询成绩</button>
+                <button id="submitBtn">查询全部成绩</button>
             </div>
 
             <div id="error-message" class="error-message" style="display: none;"></div>
 
-            <div class="results" id="results" style="display: none;">
-                <div class="results-left">
-                    <h3>学生信息</h3>
-                    <p id="studentName"></p>
-                    <p id="studentSchool"></p>
-                    <p id="studentClass"></p>
-                    <p id="totalScore"></p>
-                    
-                    <h3>答题详情</h3>
-                    <div id="scoreDetails"></div>
-                    <button id="exportExcel" class="export-button">导出详细</button>
-                </div>
-                <div class="results-right">
-                    <h3>试卷图片</h3>
-                    <div id="imageContainer"></div>
-                    <button id="exportImages" class="export-button">导出答题卡</button>
-                </div>
+            <div class="results" id="results">
+                <canvas id="scoreChart"></canvas>  <div class="results-left" id="allResultsLeft">
+                    </div>
+                <div class="results-right" id="allResultsRight">
+                    </div>
             </div>
-        </main>
+              </main>
         <footer>
             &copy; 定边七中 - 由 <a href="https://openai.com" target="_blank">OpenAI</a> 提供灵感
         </footer>
@@ -275,18 +283,7 @@
         <div class="spinner"></div>
     </div>
 
-    <script src="https://challenges.cloudflare.com/turnstile/v0/api.js" async defer></script>
-
     <script>
-        // 显示当前时间
-        function updateTime() {
-            const now = new Date();
-            const timeString = now.toLocaleString('zh-CN', { hour12: false });
-            document.getElementById('current-time').textContent = timeString;
-        }
-        updateTime();
-        setInterval
-            
         // 显示当前时间
         function updateTime() {
             const now = new Date();
@@ -296,149 +293,250 @@
         updateTime();
         setInterval(updateTime, 1000);
 
-        // Cloudflare CAPTCHA 验证
-        window.onloadTurnstileCallback = function () {
-            turnstile.render('#submit-form', {
-                sitekey: '0x4AAAAAAA1Lgw51wUi0_hHk',
-                callback: function(token) {
-                    document.getElementById('submitBtn').disabled = false;
-                },
-            });
-        };
-
-        // 其余的 JavaScript 代码保持不变
-        // ...
-
-        // 在查询开始时显示加载动画
-        submitBtn.addEventListener("click", () => {
-            document.getElementById('loading').style.display = 'flex';
-            // 其余的查询逻辑保持不变
-        });
-
-        // 在查询结束时隐藏加载动画
-        function displayResults(result) {
-            document.getElementById('loading').style.display = 'none';
-            // 其余的显示结果逻辑保持不变
-        }
-
-        // 其余的 JavaScript 代码保持不变
-        // ...
         const nameInput = document.getElementById("name");
-        const subjectSelect = document.getElementById("subject");
         const submitBtn = document.getElementById("submitBtn");
         const resultsSection = document.getElementById("results");
-        const studentName = document.getElementById("studentName");
-        const studentSchool = document.getElementById("studentSchool");
-        const studentClass = document.getElementById("studentClass");
-        const totalScore = document.getElementById("totalScore");
+        const allResultsLeft = document.getElementById("allResultsLeft");
+        const allResultsRight = document.getElementById("allResultsRight");
         const scoreDetails = document.getElementById("scoreDetails");
         const imageContainer = document.getElementById("imageContainer");
         const exportImagesBtn = document.getElementById("exportImages");
         const exportExcelBtn = document.getElementById("exportExcel");
+        const errorMessage = document.getElementById("error-message");
 
-        // 查询成绩
+
+        // 查询全部成绩
         submitBtn.addEventListener("click", () => {
             const name = nameInput.value;
-            const subject = subjectSelect.value;
 
-            if (!name || !subject) {
-                alert("请输入完整信息！");
+            if (!name) {
+                showError("请输入姓名！");
                 return;
             }
 
-            const apiUrl = `https://hx-api.tyhuixue.com/exam-service/subjectScoreModify/query?examId=EXAM95820a888ac6462da6d8fd21f0f64070&subjectId=${subject}&name=${encodeURIComponent(name)}`;
+            document.getElementById('loading').style.display = 'flex';
+            errorMessage.style.display = 'none';
+            resultsSection.style.display = 'none';
+            allResultsLeft.innerHTML = '';
+            allResultsRight.innerHTML = '';
 
-            fetch(apiUrl)
-                .then(response => response.json())
-                .then(data => {
-                    if (data.retCode === "000000" && data.result.length > 0) {
-                        displayResults(data.result[0]);
-                    } else {
-                        alert("未找到相关数据！");
-                    }
-                })
-                .catch(error => {
-                    console.error("Error fetching data:", error);
-                    alert("查询失败，请稍后重试");
-                });
+
+            const examId = "EXAM95820a888ac6462da6d8fd21f0f64070";
+            const subjectIds = [
+                "SUBJ01de4b004f054e76a1295ef0d83bccbb",
+                "SUBJ25df9928c00b4171b1f617635b033106",
+                "SUBJae5b7cb9071045219af1b71b74c7a2f7",
+                "SUBJ7f007a1596b2440c8d1202af182533ca",
+                "SUBJb6894c3db41c4cf785355dc6cb8e19fe",
+                "SUBJ4cbb9650a3ea41da894cefc41ce88d63",
+                "SUBJ4ab2cb65d5604ea78debe70f13eabf9e"
+            ];
+
+            Promise.all(subjectIds.map(subjectId => {
+                const apiUrl = `https://hx-api.tyhuixue.com/exam-service/subjectScoreModify/query?examId=${examId}&subjectId=${subjectId}&name=${encodeURIComponent(name)}`;
+                return fetch(apiUrl)
+                    .then(response => {
+                        if (!response.ok) {
+                            throw new Error(`HTTP error! status: ${response.status} for subjectId: ${subjectId}`);
+                        }
+                        return response.json();
+                    })
+                    .then(data => {
+                        if (data.retCode === "000000" && data.result && data.result.length > 0) {
+                            return data.result[0];
+                        } else {
+                            console.warn(`未找到科目 ${subjectId} 的数据！错误代码：${data.retCode}, 错误信息：${data.msg || '未知错误'}`);
+                            return null;
+                        }
+                    })
+                    .catch(error => {
+                        console.error("Error fetching data:", error);
+                        showError(`查询失败，错误信息：${error.message}`);
+                        return null;
+                    });
+            }))
+            .then(results => {
+                document.getElementById('loading').style.display = 'none';
+                const validResults = results.filter(result => result !== null);
+                if (validResults.length > 0) {
+                    displayAllResults(validResults);
+                } else {
+                    showError("未找到任何科目成绩数据！");
+                }
+            });
         });
 
-        // 显示查询结果
-        function displayResults(result) {
-            const examinee = result.examinee;
-            const subjectScore = result.subjectScore;
-
-            studentName.textContent = `姓名: ${examinee.name || "暂无"}`;
-            studentSchool.textContent = `学校: ${examinee.schoolName || "暂无"}`;
-            studentClass.textContent = `班级: ${examinee.clazzName || "暂无"}`;
-            totalScore.textContent = `总分: ${subjectScore.totalScore || "暂无"}`;
-
-            // 显示试卷图片
-            imageContainer.innerHTML = "";
-            subjectScore.imgUrlList.forEach(img => {
-                const imgElement = document.createElement("img");
-                imgElement.src = img.imgUrl;
-                imgElement.addEventListener("click", () => enlargeImage(img.imgUrl));
-                imageContainer.appendChild(imgElement);
-            });
-
-            // 显示成绩详情
-            scoreDetails.innerHTML ="";
-
-            // 显示选择题成绩
-            const kgScoreJson = JSON.parse(subjectScore.kgScoreJson);
-            if (kgScoreJson && kgScoreJson.items) {
-                const choiceScoreTable = createScoreTable("选择题", kgScoreJson.items);
-                scoreDetails.appendChild(choiceScoreTable);
-            }
-
-            // 显示主观题成绩
-            const zgScoreJson = JSON.parse(subjectScore.zgScoreJson);
-            if (zgScoreJson && zgScoreJson.items) {
-                const subjectiveScoreTable = createScoreTable("主观题", zgScoreJson.items);
-                scoreDetails.appendChild(subjectiveScoreTable);
-            }
-
-            resultsSection.style.display = "block";
+        function showError(message) {
+            errorMessage.textContent = message;
+            errorMessage.style.display = 'block';
+            resultsSection.style.display = 'none';
+            console.error("Error occurred:", message);
         }
 
-        // 创建成绩表格
-        function createScoreTable(title, items) {
+        // 显示全部科目查询结果
+        function displayAllResults(results) {
+            if (!results || results.length === 0) {
+                showError("未找到任何成绩数据");
+                return;
+            }
+
+            allResultsLeft.innerHTML = '';
+            allResultsRight.innerHTML = '';
+            resultsSection.style.display = "flex";
+
+            //  准备图表数据
+            const chartLabels = [];
+            const chartData = [];
+
+            //  先创建总分条状图 (放到 resultsSection 的最前面)
+            createAllSubjectsScoreChart(chartLabels, chartData);
+
+
+            results.forEach(result => {
+                if (!result || !result.examinee || !result.subjectScore) {
+                    console.warn("数据格式不完整，跳过此科目:", result);
+                    return;
+                }
+                const examinee = result.examinee;
+                const subjectScore = result.subjectScore;
+                const subjectId = subjectScore.subjectId;
+
+                chartLabels.push(getSubjectName(subjectId)); //  科目名称作为 X 轴标签
+                chartData.push(subjectScore.totalScore); //  总分作为 Y 轴数据
+
+
+                //  创建科目容器
+                const subjectResultDiv = document.createElement('div');
+                subjectResultDiv.classList.add('subject-result');
+
+                // 学生信息部分
+                const studentInfoDiv = document.createElement('div');
+                studentInfoDiv.innerHTML = `
+                    <h3>${getSubjectName(subjectId)}
+                        <a href="#" class="view-paper-link" onclick="scrollToImageContainer('${subjectId}', event)">查看原卷</a>
+                    </h3>
+                    <h3>学生信息</h3>
+                    <p>姓名: ${examinee.name || "暂无"}</p>
+                    <p>学校: ${examinee.schoolName || "暂无"}</p>
+                    <p>班级: ${examinee.clazzName || "暂无"}</p>
+                    <p>总分: ${subjectScore.totalScore || "暂无"}</p>
+                    <p>批改教师: ${subjectScore.teacherName || "暂无"}</p>
+                `;
+                subjectResultDiv.appendChild(studentInfoDiv);
+                allResultsLeft.appendChild(subjectResultDiv);
+
+
+                // 答题详情
+                const scoreDetailsDiv = document.createElement('div');
+                scoreDetailsDiv.classList.add('score-details');
+                subjectResultDiv.appendChild(scoreDetailsDiv);
+
+
+                let kgScoreJson, zgScoreJson;
+                try {
+                    kgScoreJson = JSON.parse(subjectScore.kgScoreJson);
+                    zgScoreJson = JSON.parse(subjectScore.zgScoreJson);
+                } catch (error) {
+                    console.error("Error parsing score JSON:", error);
+                    showError("解析成绩数据时出错");
+                    return;
+                }
+
+                // 显示选择题成绩表格
+                if (kgScoreJson && kgScoreJson.items) {
+                    const choiceScoreTable = createScoreTable("选择题", kgScoreJson.items); //  移除 subjectId 参数
+                    scoreDetailsDiv.appendChild(choiceScoreTable);
+                }
+
+                //  显示主观题成绩表格
+                if (zgScoreJson && zgScoreJson.items) {
+                    const subjectiveScoreTable = createScoreTable("主观题", zgScoreJson.items); // 移除 subjectId 参数
+                    scoreDetailsDiv.appendChild(subjectiveScoreTable);
+                }
+                subjectResultDiv.appendChild(scoreDetailsDiv);
+
+
+                // 试卷图片
+                const imageDiv = document.createElement('div');
+                imageDiv.classList.add('image-container');
+                imageDiv.innerHTML = `<h3>${getSubjectName(subjectId)} 试卷图片</h3>`;
+                const currentImageContainer = document.createElement('div');
+                currentImageContainer.id = `imageContainer-${subjectId}`;
+                currentImageContainer.classList.add('imageContainer');
+                imageDiv.appendChild(currentImageContainer);
+
+
+                subjectScore.imgUrlList.forEach(img => {
+                    const imgElement = document.createElement("img");
+                    imgElement.src = img.imgUrl;
+                    imgElement.addEventListener("click", () => enlargeImage(img.imgUrl));
+                    currentImageContainer.appendChild(imgElement);
+                });
+                allResultsRight.appendChild(imageDiv);
+            });
+
+            //  更新条状图数据 (在循环结束后更新数据)
+            createAllSubjectsScoreChart(chartLabels, chartData);
+
+
+        }
+
+        //  滚动到图片区域的函数 (全局函数，方便在 HTML 中调用)
+        function scrollToImageContainer(subjectId, event) {
+            event.preventDefault(); // 阻止默认链接行为
+            const imageContainerId = `imageContainer-${subjectId}`;
+            const imageContainerElement = document.getElementById(imageContainerId);
+            if (imageContainerElement) {
+                imageContainerElement.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            } else {
+                console.warn(`Image container with ID ${imageContainerId} not found!`);
+            }
+        }
+
+
+        function createScoreTable(title, items) { //  移除 subjectId 参数
+            if (!items || items.length === 0) {
+                const noDataMessage = document.createElement('p');
+                noDataMessage.textContent = `${title}：暂无数据`;
+                return noDataMessage;
+            }
+
             const table = document.createElement("table");
             const thead = document.createElement("thead");
             const tbody = document.createElement("tbody");
 
-            // 添加表格标题
-            const titleRow = document.createElement("tr");
-            const titleCell = document.createElement("th");
-            titleCell.colSpan = 3;
-            titleCell.textContent = title;
-            titleRow.appendChild(titleCell);
-            thead.appendChild(titleRow);
-
-            // 添加表头
             const headerRow = document.createElement("tr");
-            ["序号", "题目", "得分"].forEach(text => {
+            let headers = ["题号", "得分"]; //  基础表头，移除 "满分" 和 "查看原卷" 列
+            if (title === "主观题") { //  只有主观题表格才添加 "批改信息" 和 "阅卷人" 列
+                headers = ["题号", "得分", "批改信息", "阅卷人"];
+            }
+            headers.forEach(text => {
                 const th = document.createElement("th");
                 th.textContent = text;
                 headerRow.appendChild(th);
             });
             thead.appendChild(headerRow);
 
-            // 添加表格内容
-            items.forEach((item, index) => {
+            items.forEach(item => {
                 const row = document.createElement("tr");
-                const indexCell = document.createElement("td");
-                const itemCell = document.createElement("td");
-                const scoreCell = document.createElement("td");
+                let rowData = [item.title || "未知", item.score || 0]; // 基础行数据，移除 "满分"
 
-                indexCell.textContent = index + 1;
-                itemCell.textContent = item.title || item.item;
-                scoreCell.textContent = item.score;
+                if (title === "主观题") { //  只有主观题表格才添加 "批改信息" 和 "阅卷人" 数据
+                    let graderName = "暂无";
+                    let handlesInfo = "暂无";
+                    if (item.handles && item.handles.length > 0) {
+                        graderName = item.handles[0].username || "暂无";
+                        handlesInfo = item.handles[0].name || "暂无";
+                    }
+                    rowData = [item.title || "未知", item.score || 0, handlesInfo, graderName]; //  移除 "满分"
+                }
 
-                row.appendChild(indexCell);
-                row.appendChild(itemCell);
-                row.appendChild(scoreCell);
+                rowData.forEach(text => {
+                    const td = document.createElement("td");
+                    td.textContent = text;
+                    row.appendChild(td);
+                });
+
                 tbody.appendChild(row);
             });
 
@@ -447,77 +545,182 @@
             return table;
         }
 
-        // 放大图片
-        function enlargeImage(src) {
-            const overlay = document.createElement("div");
-            overlay.className = "enlarged-image-overlay";
-            
-            const container = document.createElement("div");
-            container.className = "enlarged-image-container";
-            
-            const img = document.createElement("img");
-            img.src = src;
-            
-            const closeBtn = document.createElement("button");
-            closeBtn.className = "close-button";
-            closeBtn.innerHTML = "&times;";
-            closeBtn.addEventListener("click", () => {
-                overlay.style.opacity = "0";
-                setTimeout(() => overlay.remove(), 300);
-            });
-            
-            container.appendChild(img);
-            container.appendChild(closeBtn);
-            overlay.appendChild(container);
-            document.body.appendChild(overlay);
-            
-            setTimeout(() => {
-                overlay.style.opacity = "1";
-                container.style.transform = "scale(1)";
-            }, 50);
+
+        function getSubjectName(subjectId) {
+            const subjectNames = {
+                "SUBJ01de4b004f054e76a1295ef0d83bccbb": "英语",
+                "SUBJ25df9928c00b4171b1f617635b033106": "数学",
+                "SUBJae5b7cb9071045219af1b71b74c7a2f7": "语文",
+                "SUBJ7f007a1596b2440c8d1202af182533ca": "物理",
+                "SUBJb6894c3db41c4cf785355dc6cb8e19fe": "历史",
+                "SUBJ4cbb9650a3ea41da894cefc41ce88d63": "化学",
+                "SUBJ4ab2cb65d5604ea78debe70f13eabf9e": "道法"
+            };
+            return subjectNames[subjectId] || "未知科目";
         }
 
-        // 导出答题卡
-        exportImagesBtn.addEventListener("click", () => {
-            const images = Array.from(imageContainer.querySelectorAll("img"));
-            if (images.length === 0) {
-                alert("没有可导出的答题卡图片");
+
+        function createAllSubjectsScoreChart(labels, data) {
+            const canvas = document.getElementById('scoreChart');
+            if (!canvas) {
+                console.error('Canvas element not found');
+                return;
+            }
+            const ctx = canvas.getContext('2d');
+            if (!ctx) {
+                console.error('Unable to get 2D context from canvas');
                 return;
             }
 
+            // 清除之前的图表
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+
+            new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: labels, //  使用科目名称作为标签
+                    datasets: [{
+                        label: '各科目总分', // 修改 label
+                        data: data, // 使用科目总分数据
+                        backgroundColor: [ //  可以自定义颜色
+                            'rgba(255, 99, 132, 0.6)',
+                            'rgba(255, 159, 64, 0.6)',
+                            'rgba(255, 205, 86, 0.6)',
+                            'rgba(75, 192, 192, 0.6)',
+                            'rgba(54, 162, 235, 0.6)',
+                            'rgba(153, 102, 255, 0.6)',
+                            'rgba(201, 203, 207, 0.6)'
+                        ],
+                        borderColor: [
+                            'rgb(255, 99, 132)',
+                            'rgb(255, 159, 64)',
+                            'rgb(255, 205, 86)',
+                            'rgb(75, 192, 192)',
+                            'rgb(54, 162, 235)',
+                            'rgb(153, 102, 255)',
+                            'rgb(201, 203, 207)'
+                        ],
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            title: {
+                                display: true,
+                                text: '总分' // 修改 Y 轴标题
+                            }
+                        }
+                    },
+                    plugins: {
+                        title: {
+                            display: true,
+                            text: '各科目总分条状图' // 修改图表标题
+                        },
+                        legend: {
+                            display: false //  隐藏图例，因为只有一个数据集
+                        },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    return `总分: ${context.parsed.y}`; // 修改 tooltip label
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
+
+        function enlargeImage(imgUrl) {
+            const overlay = document.createElement("div");
+            overlay.style.position = "fixed";
+            overlay.style.top = "0";
+            overlay.style.left = "0";
+            overlay.style.width = "100%";
+            overlay.style.height = "100%";
+            overlay.style.backgroundColor = "rgba(0,0,0,0.8)";
+            overlay.style.display = "flex";
+            overlay.style.justifyContent = "center";
+            overlay.style.alignItems = "center";
+
+            const img = document.createElement("img");
+            img.src = imgUrl;
+            img.style.maxWidth = "90%";
+            img.style.maxHeight = "90%";
+            img.style.objectFit = "contain";
+
+            overlay.appendChild(img);
+
+            overlay.addEventListener("click", () => {
+                document.body.removeChild(overlay);
+            });
+
+            document.body.appendChild(overlay);
+        }
+
+        // 导出图片
+        exportImagesBtn.addEventListener("click", () => {
             const zip = new JSZip();
-            const promises = images.map((img, index) =>
-                fetch(img.src)
-                    .then(res => res.blob())
-                    .then(blob => zip.file(`答题卡_${index + 1}.jpg`, blob))
-            );
+            const promises = [];
+
+            document.querySelectorAll('.imageContainer').forEach(container => {
+                const subjectName = container.previousElementSibling.textContent.split(' ')[0];
+
+                container.querySelectorAll('img').forEach((imgElement, index) => {
+                    const imgUrl = imgElement.src;
+                    const promise = fetch(imgUrl)
+                        .then(response => response.blob())
+                        .then(blob => {
+                            zip.file(`${subjectName}_答题卡_image_${index + 1}.jpg`, blob);
+                        });
+                    promises.push(promise);
+                });
+            });
+
 
             Promise.all(promises).then(() => {
                 zip.generateAsync({ type: "blob" }).then(content => {
-                    const a = document.createElement("a");
-                    a.href = URL.createObjectURL(content);
-                    a.download = "答题卡.zip";
-                    a.click();
+                    const link = document.createElement("a");
+                    link.href = URL.createObjectURL(content);
+                    link.download = "all_answer_sheets.zip";
+                    link.click();
                 });
             });
         });
 
-        // 导出成绩
+        // 导出Excel
         exportExcelBtn.addEventListener("click", () => {
-            const tables = scoreDetails.querySelectorAll("table");
-            if (tables.length === 0) {
-                alert("没有可导出的成绩数据");
-                return;
-            }
-
             const wb = XLSX.utils.book_new();
-            
-            tables.forEach((table, index) => {
-                const ws = XLSX.utils.table_to_sheet(table);
-                XLSX.utils.book_append_sheet(wb, ws, `成绩详情_${index + 1}`);
+
+            document.querySelectorAll('.subject-result').forEach(subjectResultDiv => {
+                const subjectName = subjectResultDiv.querySelector('h3').textContent.split('<')[0].trim(); //  更精确地获取科目名称，去除链接
+
+                const studentInfo = {};
+                subjectResultDiv.querySelectorAll('p').forEach(p => {
+                    const text = p.textContent;
+                    const parts = text.split(': ');
+                    if (parts.length === 2) {
+                        studentInfo[parts[0]] = parts[1];
+                    }
+                });
+
+                const studentInfoWs = XLSX.utils.json_to_sheet([studentInfo]);
+                XLSX.utils.book_append_sheet(wb, studentInfoWs, `${subjectName}_学生信息`);
+
+                const scoreDetailsDiv = subjectResultDiv.querySelector('.score-details');
+                scoreDetailsDiv.querySelectorAll('table').forEach(table => {
+                    const tableName = table.previousElementSibling.textContent;
+                    const wsData = XLSX.utils.table_to_sheet(table);
+                    XLSX.utils.book_append_sheet(wb, wsData, `${subjectName}_${tableName}`);
+                });
             });
 
-            XLSX.writeFile(wb, "成绩详情.xlsx");
+
+            XLSX.writeFile(wb, "all_scores_details.xlsx");
         });
     </script>
 </body>
