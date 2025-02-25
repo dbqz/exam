@@ -325,7 +325,9 @@ th {
             <div class="form">
                 <input type="text" id="name" placeholder="请输入姓名...">
                 <div class="cf-turnstile" data-sitekey="0x4AAAAAAA1Lgw51wUi0_hHk"></div>
-                <span id="turnstileStatus" style="font-size: 0.9em; color: orange;">已移除验证依赖</span>  <button id="submitBtn" >查询全部成绩</button>
+                <span id="turnstileStatus" style="font-size: 0.9em; color: orange;">已移除验证依赖</span>
+                <p id="verificationStatus" style="font-size: 0.9em; color: blue;">验证状态: 等待验证</p> <button id="checkButton">检查验证状态</button>
+                <button id="submitBtn" >查询全部成绩</button>
             </div>
 
             <div id="error-message" class="error-message" style="display: none;"></div>
@@ -386,9 +388,11 @@ th {
         const subjectSummaryTableContainer = document.getElementById("subjectSummaryTableContainer");
         const detailedResultsContainer = document.getElementById("detailedResultsContainer");
         const turnstileStatusSpan = document.getElementById("turnstileStatus"); // 获取状态显示元素
+        const verificationStatusParagraph = document.getElementById('verificationStatus'); // 获取验证状态段落
+        const checkButton = document.getElementById('checkButton'); // 获取检查验证状态按钮
 
 
-        // Cloudflare Turnstile Integration -  **已移除验证依赖，按钮始终启用，状态显示仅为提示**
+        // Cloudflare Turnstile Integration -  **已移除验证依赖，按钮始终启用，状态显示和手动检查功能已添加**
         turnstile.ready(function() {
             turnstile.load('.cf-turnstile', {
                 callback: function(token) {
@@ -396,15 +400,37 @@ th {
                     // submitBtn.disabled = false;  **已移除启用按钮的逻辑**
                     turnstileStatusSpan.textContent = "验证成功 (但验证已不再强制)"; // 更新状态为 "验证成功"
                     turnstileStatusSpan.style.color = "green";     // 设置为绿色表示成功
+                    verificationStatusParagraph.textContent = "验证状态: 已验证"; // 更新验证状态段落
+                    verificationStatusParagraph.style.color = "green";
                 },
                 "error-callback": function() {
                     // submitBtn.disabled = true;  **已移除禁用按钮的逻辑**
                     turnstileStatusSpan.textContent = "验证失败 (但验证已不再强制)"; // 更新状态为 "验证失败"
                     turnstileStatusSpan.style.color = "red";       // 设置为红色表示失败
                     showError("Turnstile验证组件加载可能失败，但不影响查询。"); // 修改错误提示
+                    verificationStatusParagraph.textContent = "验证状态: 验证失败"; // 更新验证状态段落
+                    verificationStatusParagraph.style.color = "red";
                 }
             });
         });
+
+        //  手动检查 Turnstile 验证状态
+        checkButton.addEventListener('click', checkTurnstileVerification);
+
+        function checkTurnstileVerification() {
+            const token = turnstile.getResponse();
+            if (token) {
+                verificationStatusParagraph.textContent = "验证状态: 已验证 (Token: " + token.substring(0, 20) + "... )"; // 显示部分 Token
+                verificationStatusParagraph.style.color = "green";
+                console.log("Turnstile 验证已完成，Token:", token);
+                // 在这里您可以执行验证成功后的操作 (如果您需要的话)
+            } else {
+                verificationStatusParagraph.textContent = "验证状态: 未验证";
+                verificationStatusParagraph.style.color = "red";
+                console.warn("Turnstile 尚未验证或验证失败");
+                // 在这里您可以提示用户完成验证 (如果您需要的话)
+            }
+        }
 
 
         // 查询全部成绩
@@ -483,6 +509,8 @@ th {
             detailedResultsContainer.style.display = 'none';
             turnstileStatusSpan.textContent = "错误"; // 显示 "错误" 状态
             turnstileStatusSpan.style.color = "red";
+            verificationStatusParagraph.textContent = "验证状态: 错误"; // 更新验证状态段落
+            verificationStatusParagraph.style.color = "red";
             console.error("Error occurred:", message);
         }
 
