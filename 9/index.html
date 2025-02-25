@@ -8,7 +8,6 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.7.1/jszip.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.0/chart.umd.min.js"></script>
-    <script src="https://challenges.cloudflare.com/turnstile/v0/api.js" async defer></script>
     <style>
         /* 样式代码 (与之前的版本相同，此处省略，请复制之前的 CSS 代码) */
 * {
@@ -324,9 +323,6 @@ th {
         <main>
             <div class="form">
                 <input type="text" id="name" placeholder="请输入姓名...">
-                <div class="cf-turnstile" data-sitekey="0x4AAAAAAA1Lgw51wUi0_hHk"></div>
-                <span id="turnstileStatus" style="font-size: 0.9em; color: orange;">已移除验证依赖</span>
-                <p id="verificationStatus" style="font-size: 0.9em; color: blue;">验证状态: 等待验证</p> <button id="checkButton">检查验证状态</button>
                 <button id="submitBtn" >查询全部成绩</button>
             </div>
 
@@ -387,51 +383,6 @@ th {
         const subjectSummaryTableBody = document.getElementById("subjectSummaryTableBody");
         const subjectSummaryTableContainer = document.getElementById("subjectSummaryTableContainer");
         const detailedResultsContainer = document.getElementById("detailedResultsContainer");
-        const turnstileStatusSpan = document.getElementById("turnstileStatus"); // 获取状态显示元素
-        const verificationStatusParagraph = document.getElementById('verificationStatus'); // 获取验证状态段落
-        const checkButton = document.getElementById('checkButton'); // 获取检查验证状态按钮
-
-
-        // Cloudflare Turnstile Integration -  **已移除验证依赖，按钮始终启用，状态显示和手动检查功能已添加**
-        turnstile.ready(function() {
-            turnstile.load('.cf-turnstile', {
-                callback: function(token) {
-                    console.log('Turnstile Verified (但验证已不再强制)');
-                    // submitBtn.disabled = false;  **已移除启用按钮的逻辑**
-                    turnstileStatusSpan.textContent = "验证成功 (但验证已不再强制)"; // 更新状态为 "验证成功"
-                    turnstileStatusSpan.style.color = "green";     // 设置为绿色表示成功
-                    verificationStatusParagraph.textContent = "验证状态: 已验证"; // 更新验证状态段落
-                    verificationStatusParagraph.style.color = "green";
-                },
-                "error-callback": function() {
-                    // submitBtn.disabled = true;  **已移除禁用按钮的逻辑**
-                    turnstileStatusSpan.textContent = "验证失败 (但验证已不再强制)"; // 更新状态为 "验证失败"
-                    turnstileStatusSpan.style.color = "red";       // 设置为红色表示失败
-                    showError("Turnstile验证组件加载可能失败，但不影响查询。"); // 修改错误提示
-                    verificationStatusParagraph.textContent = "验证状态: 验证失败"; // 更新验证状态段落
-                    verificationStatusParagraph.style.color = "red";
-                }
-            });
-        });
-
-        //  手动检查 Turnstile 验证状态
-        checkButton.addEventListener('click', checkTurnstileVerification);
-
-        function checkTurnstileVerification() {
-            const token = turnstile.getResponse();
-            if (token) {
-                verificationStatusParagraph.textContent = "验证状态: 已验证 (Token: " + token.substring(0, 20) + "... )"; // 显示部分 Token
-                verificationStatusParagraph.style.color = "green";
-                console.log("Turnstile 验证已完成，Token:", token);
-                // 在这里您可以执行验证成功后的操作 (如果您需要的话)
-            } else {
-                verificationStatusParagraph.textContent = "验证状态: 未验证";
-                verificationStatusParagraph.style.color = "red";
-                console.warn("Turnstile 尚未验证或验证失败");
-                // 在这里您可以提示用户完成验证 (如果您需要的话)
-            }
-        }
-
 
         // 查询全部成绩
         submitBtn.addEventListener("click", () => {
@@ -449,9 +400,6 @@ th {
             allResultsLeft.innerHTML = '';
             allResultsRight.innerHTML = '';
             subjectSummaryTableBody.innerHTML = ''; // Clear summary table
-            turnstileStatusSpan.textContent = "查询中..."; // 查询开始时显示 "查询中..."
-            turnstileStatusSpan.style.color = "blue";    // 设置为蓝色表示正在查询
-
 
             const examId = "EXAM2e1171c7cba24f4d8d4e2eded51f27b3"; // 已更新 Exam ID
             const subjectIds = [ // 已更新 Subject IDs
@@ -492,12 +440,8 @@ th {
                 const validResults = results.filter(result => result !== null);
                 if (validResults.length > 0) {
                     displayAllResults(validResults);
-                    turnstileStatusSpan.textContent = "查询完成"; // 查询成功后显示 "查询完成" 状态
-                    turnstileStatusSpan.style.color = "blue";
                 } else {
                     showError("未找到任何科目成绩数据！");
-                    turnstileStatusSpan.textContent = "未找到数据"; // 查询失败后状态显示 "未找到数据"
-                    turnstileStatusSpan.style.color = "orange";
                 }
             });
         });
@@ -507,10 +451,6 @@ th {
             errorMessage.style.display = 'block';
             resultsSection.style.display = 'none';
             detailedResultsContainer.style.display = 'none';
-            turnstileStatusSpan.textContent = "错误"; // 显示 "错误" 状态
-            turnstileStatusSpan.style.color = "red";
-            verificationStatusParagraph.textContent = "验证状态: 错误"; // 更新验证状态段落
-            verificationStatusParagraph.style.color = "red";
             console.error("Error occurred:", message);
         }
 
