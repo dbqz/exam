@@ -317,13 +317,13 @@ th {
     <div class="container">
         <header>
             <div id="current-time"></div>
-            <h1>九年级模拟（一）</h1>
+            <h1>九年级模拟（二）</h1>
         </header>
 
         <main>
             <div class="form">
                 <input type="text" id="name" placeholder="请输入姓名...">
-                <button id="submitBtn" >查询全部成绩</button>
+                <button id="submitBtn" >查询成绩</button>
             </div>
 
             <div id="error-message" class="error-message" style="display: none;"></div>
@@ -401,15 +401,15 @@ th {
             allResultsRight.innerHTML = '';
             subjectSummaryTableBody.innerHTML = ''; // Clear summary table
 
-            const examId = "EXAM2e1171c7cba24f4d8d4e2eded51f27b3"; // 已更新 Exam ID
+            const examId = "EXAM0fb3bf5b7fe64220bfec1a07b3a5aec9"; // 已更新 Exam ID
             const subjectIds = [ // 已更新 Subject IDs
-                "SUBJfc43c0f3a80e4e60b027b9746c1f2070", // 语文
-                "SUBJ71e23105653f4fa0a48c55385e3cc17e", // 数学
-                "SUBJf841b9bfb18141d089774b3b4df95e8b", // 英语
-                "SUBJ03131b50e8fb4cef8c95425705a266a9", // 物理
-                "SUBJ15febbccd74d4241aa63e68402e2c1cc", // 化学
-                "SUBJ2b6115b8da2d48368fe93e97569dd878", // 历史
-                "SUBJ9b4cc5e1473c404692bf512bfb136c09"  // 道法
+                "SUBJ0663e40fba67440c87ba5512ec64c4b1", // 语文
+                "SUBJ5144435b07bd465283c920a148384a84", // 数学
+                "SUBJf888f4508ff24f1b8aa55e894e7615a9", // 英语
+                "SUBJ2fb3501ab39045f49edea4c30fd18a4f", // 物理
+                "SUBJdb23253c4c7749afac8ecdcfd654da0e", // 化学
+                "SUBJ4226f2afeca449adbcd29d178c5870a2", // 历史
+                "SUBJ667d7fbd49f041d681b5933412c650dc"  // 道法
             ];
 
             Promise.all(subjectIds.map(subjectId => {
@@ -662,20 +662,14 @@ th {
 
         function getSubjectName(subjectId) {
             const subjectNames = {
-                "SUBJ01de4b004f054e76a1295ef0d83bccbb": "英语",
-                "SUBJ25df9928c00b4171b1f617635b033106": "数学",
-                "SUBJae5b7cb9071045219af1b71b74c7a2f7": "语文",
-                "SUBJ7f007a1596b2440c8d1202af182533ca": "物理",
-                "SUBJb6894c3db41c4cf785355dc6cb8e19fe": "历史",
-                "SUBJ4cbb9650a3ea41da894cefc41ce88d63": "化学",
-                "SUBJ4ab2cb65d5604ea78debe70f13eabf9e": "道法",
-                "SUBJfc43c0f3a80e4e60b027b9746c1f2070": "语文",
-                "SUBJ71e23105653f4fa0a48c55385e3cc17e": "数学",
-                "SUBJf841b9bfb18141d089774b3b4df95e8b": "英语",
-                "SUBJ03131b50e8fb4cef8c95425705a266a9": "物理",
-                "SUBJ15febbccd74d4241aa63e68402e2c1cc": "化学",
-                "SUBJ2b6115b8da2d48368fe93e97569dd878": "历史",
-                "SUBJ9b4cc5e1473c404692bf512bfb136c09": "道法"
+                "SUBJf888f4508ff24f1b8aa55e894e7615a9": "英语",
+                "SUBJ5144435b07bd465283c920a148384a84": "数学",
+                "SUBJ0663e40fba67440c87ba5512ec64c4b1": "语文",
+                "SUBJ2fb3501ab39045f49edea4c30fd18a4f": "物理",
+                "SUBJ4226f2afeca449adbcd29d178c5870a2": "历史",
+                "SUBJdb23253c4c7749afac8ecdcfd654da0e": "化学",
+                "SUBJ667d7fbd49f041d681b5933412c650dc": "道法",
+              
             };
             return subjectNames[subjectId] || "未知科目";
         }
